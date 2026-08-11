@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Micro Survivors Prototype v18 Relative Touch Joystick</title>
+  <title>Micro Survivors Prototype v19 Dynamic Joystick</title>
   <style>
     :root{
       --bg:#07090c;--game-bg:#0b0e12;--panel:rgba(13,18,24,.90);--line:rgba(255,255,255,.10);
@@ -19,12 +19,14 @@
     .pill{background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px);padding:6px 8px;border-radius:9px;font-size:10px;white-space:nowrap}
     .spacer{flex:1}
 
-    /* v18 UI: HEALTH | relative-origin analog joystick | XP | pause */
-    .bottomControls{position:absolute;left:0;right:0;bottom:0;height:58px;display:grid;grid-template-columns:1fr 58px 1fr 48px;background:rgba(8,11,15,.94);border-top:1px solid var(--line);pointer-events:auto}
-    #joystick{position:relative;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line);border-right:1px solid var(--line);touch-action:none;user-select:none;cursor:grab}
-    #joystick:active{cursor:grabbing}
-    .stickRing{position:relative;width:40px;height:40px;border-radius:50%;border:1px solid rgba(255,255,255,.20);background:rgba(255,255,255,.035)}
-    #stickKnob{position:absolute;left:50%;top:50%;width:15px;height:15px;border-radius:50%;transform:translate(-50%,-50%);background:var(--accent);box-shadow:0 0 10px rgba(185,255,102,.22);transition:transform .025s linear}
+    /* v19 UI: HEALTH | XP | pause. Movement uses a dynamic joystick over the playfield. */
+    .bottomControls{position:absolute;left:0;right:0;bottom:0;height:58px;display:grid;grid-template-columns:1fr 1fr 48px;background:rgba(8,11,15,.94);border-top:1px solid var(--line);pointer-events:auto}
+    #dynamicJoystick{position:absolute;left:0;top:0;width:70px;height:70px;display:none;transform:translate(-50%,-50%);pointer-events:none;z-index:8}
+    #dynamicJoystick.active{display:block}
+    .stickRing{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(10,14,18,.22);box-shadow:0 0 18px rgba(0,0,0,.22)}
+    #stickKnob{position:absolute;left:50%;top:50%;width:20px;height:20px;border-radius:50%;transform:translate(-50%,-50%);background:var(--accent);box-shadow:0 0 12px rgba(185,255,102,.30);transition:transform .025s linear}
+    #moveHint{position:absolute;left:50%;bottom:76px;transform:translateX(-50%);padding:7px 11px;border-radius:999px;background:rgba(8,11,15,.70);border:1px solid rgba(255,255,255,.10);color:rgba(242,244,247,.84);font-size:10px;letter-spacing:.02em;white-space:nowrap;pointer-events:none;z-index:7;transition:opacity .35s ease,transform .35s ease}
+    #moveHint.hidden{opacity:0;transform:translate(-50%,6px)}
     .barbox{min-width:0;padding:8px 7px 7px;display:flex;flex-direction:column;justify-content:center;background:transparent}
     .barlabel{display:flex;justify-content:space-between;gap:4px;font-size:8px;color:var(--muted);margin-bottom:4px;line-height:1;white-space:nowrap}
     .bar{height:7px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
@@ -51,7 +53,7 @@
     .gameoverBox h1{font-size:35px;margin:0 0 7px}.gameoverBox p{font-size:13px}
     .stats{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin:18px 0;color:var(--muted);font-size:12px}
     button{cursor:pointer;border:0;border-radius:11px;padding:11px 16px;font-weight:800;background:var(--accent);color:#111}.hint{display:none}
-    @media(max-height:650px){.bottomControls{height:50px;grid-template-columns:1fr 50px 1fr 44px}#joystick{width:50px;height:50px}#pauseBtn{width:44px;height:50px}.stickRing{width:34px;height:34px}#stickKnob{width:13px;height:13px}.barbox{padding:6px}.topbar{padding:5px}.pill{padding:4px 6px;font-size:9px}}
+    @media(max-height:650px){.bottomControls{height:50px;grid-template-columns:1fr 1fr 44px}#pauseBtn{width:44px;height:50px}#dynamicJoystick{width:64px;height:64px}#stickKnob{width:18px;height:18px}#moveHint{bottom:66px}.barbox{padding:6px}.topbar{padding:5px}.pill{padding:4px 6px;font-size:9px}}
   </style>
 </head>
 <body>
@@ -61,15 +63,16 @@
     <div class="topbar">
       <div class="pill">TIME <b id="time">00:00</b></div><div class="pill">LV <b id="level">1</b></div><div class="pill">KILLS <b id="kills">0</b></div><div class="spacer"></div><div class="pill">DMG <b id="damage">12</b></div>
     </div>
-    <div id="centerMsg"><div class="title">MICRO SURVIVORS</div><div class="sub">Experimental isometric view. Collision footprints are shown on the ground. Use the stick or WASD.</div></div>
+    <div id="centerMsg"><div class="title">MICRO SURVIVORS</div><div class="sub">Experimental isometric view. Collision footprints are shown on the ground. Drag anywhere on the playfield or use WASD.</div></div>
+    <div id="dynamicJoystick" aria-hidden="true"><div class="stickRing"></div><div id="stickKnob"></div></div>
+    <div id="moveHint">Tap and drag to move</div>
     <div class="bottomControls">
       <div class="barbox"><div class="barlabel"><span>HEALTH</span><span id="hpText">100 / 100</span></div><div class="bar"><div id="hpFill" class="fill"></div></div></div>
-      <div id="joystick" aria-label="Movement joystick"><div class="stickRing"><div id="stickKnob"></div></div></div>
       <div class="barbox"><div class="barlabel"><span>XP</span><span id="xpText">0 / 5</span></div><div class="bar"><div id="xpFill" class="fill"></div></div></div>
       <button id="pauseBtn" aria-label="Pause game" title="Pause">Ⅱ</button>
     </div>
   </div>
-  <div id="startOverlay"><div class="startBox"><h1>MICRO SURVIVORS</h1><p>Survive the arena, collect XP and build your weapon. Use WASD / arrow keys or the movement stick.</p><button id="startBtn">Start Run</button></div></div>
+  <div id="startOverlay"><div class="startBox"><h1>MICRO SURVIVORS</h1><p>Survive the arena, collect XP and build your weapon. Tap and drag anywhere on the playfield to move, or use WASD / arrow keys.</p><button id="startBtn">Start Run</button></div></div>
   <div id="pauseOverlay"><div class="pauseBox"><h1>PAUSED</h1><p>Your run is frozen. Resume whenever you're ready.</p><button id="resumeBtn">Resume</button></div></div>
   <div id="upgradeOverlay"><div class="modal"><h1>Level Up</h1><p>Pick one upgrade. Keyboard: 1, 2 or 3.</p><div id="cards" class="cards"></div></div></div>
   <div id="gameOver"><div class="gameoverBox"><h1>YOU DIED</h1><p>The swarm eventually wins.</p><div class="stats"><span>Time <b id="finalTime">00:00</b></span><span>Kills <b id="finalKills">0</b></span><span>Level <b id="finalLevel">1</b></span></div><button id="restartBtn">Restart Run</button></div></div>
@@ -78,7 +81,7 @@
 (() => {
 'use strict';
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-const el={time:document.getElementById('time'),level:document.getElementById('level'),kills:document.getElementById('kills'),damage:document.getElementById('damage'),hpText:document.getElementById('hpText'),xpText:document.getElementById('xpText'),hpFill:document.getElementById('hpFill'),xpFill:document.getElementById('xpFill'),centerMsg:document.getElementById('centerMsg'),upgradeOverlay:document.getElementById('upgradeOverlay'),cards:document.getElementById('cards'),gameOver:document.getElementById('gameOver'),finalTime:document.getElementById('finalTime'),finalKills:document.getElementById('finalKills'),finalLevel:document.getElementById('finalLevel'),restartBtn:document.getElementById('restartBtn'),startOverlay:document.getElementById('startOverlay'),startBtn:document.getElementById('startBtn'),pauseOverlay:document.getElementById('pauseOverlay'),pauseBtn:document.getElementById('pauseBtn'),resumeBtn:document.getElementById('resumeBtn'),joystick:document.getElementById('joystick'),stickKnob:document.getElementById('stickKnob')};
+const el={time:document.getElementById('time'),level:document.getElementById('level'),kills:document.getElementById('kills'),damage:document.getElementById('damage'),hpText:document.getElementById('hpText'),xpText:document.getElementById('xpText'),hpFill:document.getElementById('hpFill'),xpFill:document.getElementById('xpFill'),centerMsg:document.getElementById('centerMsg'),upgradeOverlay:document.getElementById('upgradeOverlay'),cards:document.getElementById('cards'),gameOver:document.getElementById('gameOver'),finalTime:document.getElementById('finalTime'),finalKills:document.getElementById('finalKills'),finalLevel:document.getElementById('finalLevel'),restartBtn:document.getElementById('restartBtn'),startOverlay:document.getElementById('startOverlay'),startBtn:document.getElementById('startBtn'),pauseOverlay:document.getElementById('pauseOverlay'),pauseBtn:document.getElementById('pauseBtn'),resumeBtn:document.getElementById('resumeBtn'),dynamicJoystick:document.getElementById('dynamicJoystick'),stickKnob:document.getElementById('stickKnob'),moveHint:document.getElementById('moveHint')};
 const keys=new Set(),W=540,H=960,HUD_SAFE=66,WORLD_W=720,WORLD_H=1160;
 let DPR=Math.min(devicePixelRatio||1,2);function resize(){DPR=Math.min(devicePixelRatio||1,2);canvas.width=Math.round(W*DPR);canvas.height=Math.round(H*DPR);ctx.setTransform(DPR,0,0,DPR,0,0)}addEventListener('resize',resize);resize();
 const rand=(a,b)=>a+Math.random()*(b-a),clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist2=(a,b)=>(a.x-b.x)**2+(a.y-b.y)**2,fmtTime=s=>{s=Math.floor(s);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
@@ -106,7 +109,7 @@ const UPGRADE_POOL=[
 {name:'Regeneration',desc:'+0.7 HP regenerated per second.',apply:g=>g.player.regen+=.7},
 {name:'Second Barrel',desc:'Fire one additional spread projectile.',apply:g=>g.player.shotCount=Math.min(5,g.player.shotCount+1)}];
 
-function reset(){if(typeof resetJoystick==='function')resetJoystick();sfxState.lastImpactTime=-Infinity;sfxState.lastXpTime=-Infinity;sfxState.xpStreak=0;game={running:true,started:false,paused:false,choosing:false,startedAt:performance.now()/1000,time:0,kills:0,level:1,xp:0,xpNeed:5,spawnTimer:.3,flash:0,shake:0,player:{x:WORLD_W/2,y:WORLD_H/2,r:14,speed:290,hp:100,maxHp:100,regen:0,damage:12,fireCooldown:.55,fireTimer:.2,bulletSpeed:620,bulletRadius:5,bulletLife:.52,blastRadius:0,blastDamageScale:.65,pierce:0,bounces:0,shotCount:1,invuln:0},enemies:[],bullets:[],gems:[],healthDrops:[],particles:[],explosions:[],spawnWarnings:[],pendingSpawns:[],damageNumbers:[]};el.gameOver.style.display='none';el.upgradeOverlay.style.display='none';el.pauseOverlay.style.display='none';el.startOverlay.style.display='flex';el.centerMsg.style.display='none';el.pauseBtn.textContent='Ⅱ';updateHud()}
+function reset(){if(typeof resetJoystick==='function')resetJoystick();if(typeof joystickState!=='undefined')joystickState.hintDismissed=false;if(el.moveHint){el.moveHint.classList.remove('hidden');el.moveHint.textContent=matchMedia('(pointer:coarse)').matches?'Tap and drag to move':'Click and drag to move';}sfxState.lastImpactTime=-Infinity;sfxState.lastXpTime=-Infinity;sfxState.xpStreak=0;game={running:true,started:false,paused:false,choosing:false,startedAt:performance.now()/1000,time:0,kills:0,level:1,xp:0,xpNeed:5,spawnTimer:.3,flash:0,shake:0,player:{x:WORLD_W/2,y:WORLD_H/2,r:14,speed:290,hp:100,maxHp:100,regen:0,damage:12,fireCooldown:.55,fireTimer:.2,bulletSpeed:620,bulletRadius:5,bulletLife:.52,blastRadius:0,blastDamageScale:.65,pierce:0,bounces:0,shotCount:1,invuln:0},enemies:[],bullets:[],gems:[],healthDrops:[],particles:[],explosions:[],spawnWarnings:[],pendingSpawns:[],damageNumbers:[]};el.gameOver.style.display='none';el.upgradeOverlay.style.display='none';el.pauseOverlay.style.display='none';el.startOverlay.style.display='flex';el.centerMsg.style.display='none';el.pauseBtn.textContent='Ⅱ';updateHud()}
 function startRun(){if(!game||!game.running||game.started)return;ensureAudio();game.started=true;game.paused=false;el.startOverlay.style.display='none';el.pauseOverlay.style.display='none';el.pauseBtn.textContent='Ⅱ';resetJoystick()}
 function setPaused(value){if(!game||!game.running||!game.started||game.choosing)return;game.paused=!!value;resetJoystick();el.pauseOverlay.style.display=game.paused?'flex':'none';el.pauseBtn.textContent=game.paused?'▶':'Ⅱ'}
 function togglePause(){setPaused(!game.paused)}
@@ -124,23 +127,32 @@ function chooseUpgrade(u){if(!game.choosing)return;u.apply(game);game.choosing=f
 function gameOver(){game.running=false;game.paused=false;resetJoystick();el.pauseOverlay.style.display='none';el.finalTime.textContent=fmtTime(game.time);el.finalKills.textContent=game.kills;el.finalLevel.textContent=game.level;el.gameOver.style.display='flex'}
 function updateHud(){const p=game.player;el.time.textContent=fmtTime(game.time);el.level.textContent=game.level;el.kills.textContent=game.kills;el.damage.textContent=Math.round(p.damage);el.hpText.textContent=`${Math.ceil(p.hp)} / ${Math.ceil(p.maxHp)}`;el.xpText.textContent=`${game.xp} / ${game.xpNeed}`;el.hpFill.style.width=(100*p.hp/p.maxHp)+'%';el.xpFill.style.width=(100*game.xp/game.xpNeed)+'%'}
 
-// v18 analog control tuning: drag is measured from where the finger first touches.
-const joystickState={x:0,y:0,targetX:0,targetY:0,pointerId:null,originX:0,originY:0};
-function resetJoystick(){joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;joystickState.pointerId=null;joystickState.originX=0;joystickState.originY=0;el.stickKnob.style.transform='translate(-50%,-50%)'}
+// v19 dynamic analog joystick: the first touch anywhere on the playfield becomes the temporary center.
+const joystickState={x:0,y:0,targetX:0,targetY:0,pointerId:null,originX:0,originY:0,hintDismissed:false};
+const JOYSTICK_DEADZONE=7,JOYSTICK_MAX_RADIUS=61,JOYSTICK_VISUAL_RADIUS=20;
+function resetJoystick(){
+  joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;joystickState.pointerId=null;joystickState.originX=0;joystickState.originY=0;
+  if(el.stickKnob)el.stickKnob.style.transform='translate(-50%,-50%)';
+  if(el.dynamicJoystick)el.dynamicJoystick.classList.remove('active');
+}
+function placeDynamicJoystick(clientX,clientY){
+  const shellRect=document.getElementById('gameShell').getBoundingClientRect();
+  el.dynamicJoystick.style.left=(clientX-shellRect.left)+'px';
+  el.dynamicJoystick.style.top=(clientY-shellRect.top)+'px';
+  el.dynamicJoystick.classList.add('active');
+}
 function updateJoystickFromPointer(e){
-  const rect=el.joystick.getBoundingClientRect();
   const dx=e.clientX-joystickState.originX,dy=e.clientY-joystickState.originY,d=Math.hypot(dx,dy);
-  const deadZone=Math.max(6,rect.width*.12);       // ~12% deadzone
-  const maxRadius=rect.width*.42*2.5;              // 2.5x drag distance before full speed
-  if(d<=deadZone){joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;el.stickKnob.style.transform='translate(-50%,-50%)';return}
+  if(d<=JOYSTICK_DEADZONE){joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;el.stickKnob.style.transform='translate(-50%,-50%)';return}
   const dirX=dx/d,dirY=dy/d;
-  const travel=clamp((d-deadZone)/Math.max(1,maxRadius-deadZone),0,1);
-  const eased=travel*travel*(3-2*travel);           // smoothstep response
-  const speedScale=.30+.70*eased;                  // 30% -> 100%
+  const travel=clamp((d-JOYSTICK_DEADZONE)/Math.max(1,JOYSTICK_MAX_RADIUS-JOYSTICK_DEADZONE),0,1);
+  const eased=travel*travel*(3-2*travel);
+  const speedScale=.30+.70*eased;
   joystickState.targetX=dirX*speedScale;
   joystickState.targetY=dirY*speedScale;
-  const visualRadius=rect.width*.24,kx=dirX*visualRadius*travel,ky=dirY*visualRadius*travel;
+  const kx=dirX*JOYSTICK_VISUAL_RADIUS*travel,ky=dirY*JOYSTICK_VISUAL_RADIUS*travel;
   el.stickKnob.style.transform=`translate(calc(-50% + ${kx}px), calc(-50% + ${ky}px))`;
+  if(!joystickState.hintDismissed&&travel>.08){joystickState.hintDismissed=true;el.moveHint.classList.add('hidden')}
 }
 
 function update(dt){
@@ -196,9 +208,9 @@ function render(){drawGrid();if(!game)return;const sx=game.shake?rand(-game.shak
 
 addEventListener('keydown',e=>{keys.add(e.code);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();if(game?.choosing&&['Digit1','Digit2','Digit3'].includes(e.code)){const i=Number(e.code.slice(-1))-1,u=game.upgradePicks?.[i];if(u)chooseUpgrade(u)}if((e.code==='Escape'||e.code==='KeyP')&&game?.running&&game?.started&&!game?.choosing)togglePause();if((e.code==='Enter'||e.code==='Space')&&game?.running&&!game?.started)startRun();if(e.code==='KeyR'&&game&&!game.running)reset()},{passive:false});
 addEventListener('keyup',e=>keys.delete(e.code));
-el.joystick.addEventListener('pointerdown',e=>{if(!game?.running||!game?.started||game.paused||game.choosing)return;ensureAudio();joystickState.pointerId=e.pointerId;joystickState.originX=e.clientX;joystickState.originY=e.clientY;joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;el.stickKnob.style.transform='translate(-50%,-50%)';el.joystick.setPointerCapture(e.pointerId);e.preventDefault()});
-el.joystick.addEventListener('pointermove',e=>{if(joystickState.pointerId!==e.pointerId)return;updateJoystickFromPointer(e);e.preventDefault()});
-el.joystick.addEventListener('pointerup',e=>{if(joystickState.pointerId===e.pointerId)resetJoystick();e.preventDefault()});el.joystick.addEventListener('pointercancel',resetJoystick);el.joystick.addEventListener('lostpointercapture',resetJoystick);
+canvas.addEventListener('pointerdown',e=>{if(!game?.running||!game?.started||game.paused||game.choosing||joystickState.pointerId!==null)return;ensureAudio();joystickState.pointerId=e.pointerId;joystickState.originX=e.clientX;joystickState.originY=e.clientY;joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;el.stickKnob.style.transform='translate(-50%,-50%)';placeDynamicJoystick(e.clientX,e.clientY);canvas.setPointerCapture(e.pointerId);e.preventDefault()});
+canvas.addEventListener('pointermove',e=>{if(joystickState.pointerId!==e.pointerId)return;updateJoystickFromPointer(e);e.preventDefault()});
+canvas.addEventListener('pointerup',e=>{if(joystickState.pointerId===e.pointerId)resetJoystick();e.preventDefault()});canvas.addEventListener('pointercancel',resetJoystick);canvas.addEventListener('lostpointercapture',resetJoystick);
 el.restartBtn.onclick=reset;el.startBtn.onclick=startRun;el.pauseBtn.onclick=togglePause;el.resumeBtn.onclick=()=>setPaused(false);
 reset();let last=performance.now();function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;update(dt);render();requestAnimationFrame(loop)}requestAnimationFrame(loop);
 })();
