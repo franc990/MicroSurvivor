@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>Micro Survivors Prototype v17 Extended Joystick Range</title>
+  <title>Micro Survivors Prototype v18 Relative Touch Joystick</title>
   <style>
     :root{
       --bg:#07090c;--game-bg:#0b0e12;--panel:rgba(13,18,24,.90);--line:rgba(255,255,255,.10);
@@ -19,7 +19,7 @@
     .pill{background:var(--panel);border:1px solid var(--line);backdrop-filter:blur(8px);padding:6px 8px;border-radius:9px;font-size:10px;white-space:nowrap}
     .spacer{flex:1}
 
-    /* v17 UI: HEALTH | extended-range analog joystick | XP | pause */
+    /* v18 UI: HEALTH | relative-origin analog joystick | XP | pause */
     .bottomControls{position:absolute;left:0;right:0;bottom:0;height:58px;display:grid;grid-template-columns:1fr 58px 1fr 48px;background:rgba(8,11,15,.94);border-top:1px solid var(--line);pointer-events:auto}
     #joystick{position:relative;width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line);border-right:1px solid var(--line);touch-action:none;user-select:none;cursor:grab}
     #joystick:active{cursor:grabbing}
@@ -124,14 +124,14 @@ function chooseUpgrade(u){if(!game.choosing)return;u.apply(game);game.choosing=f
 function gameOver(){game.running=false;game.paused=false;resetJoystick();el.pauseOverlay.style.display='none';el.finalTime.textContent=fmtTime(game.time);el.finalKills.textContent=game.kills;el.finalLevel.textContent=game.level;el.gameOver.style.display='flex'}
 function updateHud(){const p=game.player;el.time.textContent=fmtTime(game.time);el.level.textContent=game.level;el.kills.textContent=game.kills;el.damage.textContent=Math.round(p.damage);el.hpText.textContent=`${Math.ceil(p.hp)} / ${Math.ceil(p.maxHp)}`;el.xpText.textContent=`${game.xp} / ${game.xpNeed}`;el.hpFill.style.width=(100*p.hp/p.maxHp)+'%';el.xpFill.style.width=(100*game.xp/game.xpNeed)+'%'}
 
-// v17 analog control tuning: 2.5x physical drag range for touch precision.
-const joystickState={x:0,y:0,targetX:0,targetY:0,pointerId:null};
-function resetJoystick(){joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;joystickState.pointerId=null;el.stickKnob.style.transform='translate(-50%,-50%)'}
+// v18 analog control tuning: drag is measured from where the finger first touches.
+const joystickState={x:0,y:0,targetX:0,targetY:0,pointerId:null,originX:0,originY:0};
+function resetJoystick(){joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;joystickState.pointerId=null;joystickState.originX=0;joystickState.originY=0;el.stickKnob.style.transform='translate(-50%,-50%)'}
 function updateJoystickFromPointer(e){
-  const rect=el.joystick.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-  const dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy);
+  const rect=el.joystick.getBoundingClientRect();
+  const dx=e.clientX-joystickState.originX,dy=e.clientY-joystickState.originY,d=Math.hypot(dx,dy);
   const deadZone=Math.max(6,rect.width*.12);       // ~12% deadzone
-  const maxRadius=rect.width*.42*2.5;              // v17: 2.5x drag distance before full speed
+  const maxRadius=rect.width*.42*2.5;              // 2.5x drag distance before full speed
   if(d<=deadZone){joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;el.stickKnob.style.transform='translate(-50%,-50%)';return}
   const dirX=dx/d,dirY=dy/d;
   const travel=clamp((d-deadZone)/Math.max(1,maxRadius-deadZone),0,1);
@@ -196,7 +196,7 @@ function render(){drawGrid();if(!game)return;const sx=game.shake?rand(-game.shak
 
 addEventListener('keydown',e=>{keys.add(e.code);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space'].includes(e.code))e.preventDefault();if(game?.choosing&&['Digit1','Digit2','Digit3'].includes(e.code)){const i=Number(e.code.slice(-1))-1,u=game.upgradePicks?.[i];if(u)chooseUpgrade(u)}if((e.code==='Escape'||e.code==='KeyP')&&game?.running&&game?.started&&!game?.choosing)togglePause();if((e.code==='Enter'||e.code==='Space')&&game?.running&&!game?.started)startRun();if(e.code==='KeyR'&&game&&!game.running)reset()},{passive:false});
 addEventListener('keyup',e=>keys.delete(e.code));
-el.joystick.addEventListener('pointerdown',e=>{if(!game?.running||!game?.started||game.paused||game.choosing)return;ensureAudio();joystickState.pointerId=e.pointerId;el.joystick.setPointerCapture(e.pointerId);updateJoystickFromPointer(e);e.preventDefault()});
+el.joystick.addEventListener('pointerdown',e=>{if(!game?.running||!game?.started||game.paused||game.choosing)return;ensureAudio();joystickState.pointerId=e.pointerId;joystickState.originX=e.clientX;joystickState.originY=e.clientY;joystickState.x=0;joystickState.y=0;joystickState.targetX=0;joystickState.targetY=0;el.stickKnob.style.transform='translate(-50%,-50%)';el.joystick.setPointerCapture(e.pointerId);e.preventDefault()});
 el.joystick.addEventListener('pointermove',e=>{if(joystickState.pointerId!==e.pointerId)return;updateJoystickFromPointer(e);e.preventDefault()});
 el.joystick.addEventListener('pointerup',e=>{if(joystickState.pointerId===e.pointerId)resetJoystick();e.preventDefault()});el.joystick.addEventListener('pointercancel',resetJoystick);el.joystick.addEventListener('lostpointercapture',resetJoystick);
 el.restartBtn.onclick=reset;el.startBtn.onclick=startRun;el.pauseBtn.onclick=togglePause;el.resumeBtn.onclick=()=>setPaused(false);
