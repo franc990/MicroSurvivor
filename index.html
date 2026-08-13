@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <title>Micro Survivors Prototype v49.1 Dialogue Visibility Fix</title>
+    <title>Micro Survivors Prototype v50.2 Module Carrier</title>
     <style>
       :root {
         --bg: #07090c;
@@ -20,6 +20,10 @@
         --xp: #6ed6ff;
         --gold: #ffd166;
         --terminal: #7ad7ff;
+        --ui-pop-duration: 180ms;
+        --ui-pop-ease: cubic-bezier(0.2, 0.9, 0.25, 1.12);
+        --ui-pop-scale: 0.94;
+        --ui-pop-offset: -8px;
       }
       * {
         box-sizing: border-box;
@@ -243,6 +247,13 @@
         color: #ffe7a0;
         text-shadow: 0 0 10px rgba(255, 209, 102, 0.95);
       }
+      .modulePill {
+        border-color: rgba(151, 255, 77, 0.38);
+        background: rgba(151, 255, 77, 0.08);
+      }
+      .modulePill b {
+        color: #b9ff66;
+      }
       #hubTop {
         display: none;
       }
@@ -287,10 +298,11 @@
         position: absolute;
         left: 50%;
         top: 86px;
-        transform: translateX(-50%) translateY(-8px);
+        transform: translateX(-50%) translateY(var(--ui-pop-offset))
+          scale(var(--ui-pop-scale));
         width: calc(100% - 30px);
         min-height: 96px;
-        display: none;
+        display: grid;
         grid-template-columns: 70px 1fr;
         gap: 12px;
         padding: 11px;
@@ -299,16 +311,20 @@
         border-left: 3px solid #7ad7ff;
         box-shadow: 0 14px 34px rgba(0, 0, 0, 0.48);
         z-index: 16;
-        pointer-events: auto;
+        pointer-events: none;
+        visibility: hidden;
         opacity: 0;
         transition:
-          opacity 0.16s ease,
-          transform 0.16s ease;
+          opacity var(--ui-pop-duration) var(--ui-pop-ease),
+          transform var(--ui-pop-duration) var(--ui-pop-ease),
+          visibility 0s linear var(--ui-pop-duration);
       }
       #dialogueBox.show {
-        display: grid;
+        visibility: visible;
+        pointer-events: auto;
         opacity: 1;
-        transform: translateX(-50%) translateY(0);
+        transform: translateX(-50%) translateY(0) scale(1);
+        transition-delay: 0s;
       }
       .dialoguePortrait {
         min-height: 70px;
@@ -381,7 +397,8 @@
       #resetConfirmOverlay,
       #selfDestructConfirmOverlay,
       #raidUpgradesOverlay,
-      #testUpgradesOverlay {
+      #testUpgradesOverlay,
+      #androidConfigOverlay {
         position: absolute;
         inset: 0;
         display: none;
@@ -392,6 +409,28 @@
         padding: 14px;
         z-index: 20;
       }
+      #gameOver,
+      #sectorOverlay {
+        opacity: 0;
+        transition: opacity var(--ui-pop-duration) ease;
+      }
+      #gameOver.show,
+      #sectorOverlay.show {
+        opacity: 1;
+      }
+      #gameOver .gameoverBox,
+      #sectorOverlay .sectorBox {
+        opacity: 0;
+        transform: translateY(8px) scale(var(--ui-pop-scale));
+        transition:
+          opacity var(--ui-pop-duration) var(--ui-pop-ease),
+          transform var(--ui-pop-duration) var(--ui-pop-ease);
+      }
+      #gameOver.show .gameoverBox,
+      #sectorOverlay.show .sectorBox {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
       #startOverlay {
         display: flex;
         background: rgba(3, 5, 8, 0.88);
@@ -401,7 +440,8 @@
         z-index: 30;
       }
       #raidUpgradesOverlay,
-      #testUpgradesOverlay {
+      #testUpgradesOverlay,
+      #androidConfigOverlay {
         z-index: 28;
       }
       .startBox,
@@ -505,6 +545,132 @@
         background: #1a2630;
         color: #d9f6ff;
         border: 1px solid rgba(122, 215, 255, 0.22);
+      }
+      .androidConfigBox {
+        width: 94%;
+        max-height: 92%;
+        overflow: auto;
+        background: #0d1218;
+        border: 1px solid rgba(122, 215, 255, 0.34);
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 24px 70px rgba(0, 0, 0, 0.62);
+      }
+      .configCapacityGrid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 7px;
+        margin: 11px 0;
+      }
+      .configCapacity {
+        padding: 9px;
+        text-align: left;
+        background: rgba(122, 215, 255, 0.055);
+        border: 1px solid rgba(122, 215, 255, 0.16);
+      }
+      .configCapacity span {
+        display: block;
+        color: var(--muted);
+        font-size: 8px;
+        letter-spacing: 0.1em;
+      }
+      .configCapacity strong {
+        display: block;
+        margin-top: 3px;
+        color: #9ce8ff;
+        font-size: 17px;
+      }
+      .configSection {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .configSectionTitle {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        color: #dff8ff;
+        font-size: 10px;
+        font-weight: 900;
+        letter-spacing: 0.1em;
+      }
+      .configSectionTitle span {
+        color: var(--muted);
+        font-size: 8px;
+        font-weight: 600;
+        letter-spacing: 0.05em;
+      }
+      summary.configSectionTitle {
+        cursor: pointer;
+        list-style: none;
+      }
+      summary.configSectionTitle::-webkit-details-marker {
+        display: none;
+      }
+      summary.configSectionTitle::after {
+        content: "+";
+        color: #ffd166;
+        font-size: 14px;
+      }
+      details[open] > summary.configSectionTitle::after {
+        content: "−";
+      }
+      .configModuleRow {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 9px;
+        background: #141b23;
+        border-left: 2px solid rgba(185, 255, 102, 0.62);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .configModuleRow button {
+        width: auto;
+        min-width: 76px;
+        padding: 7px 8px;
+        border-radius: 4px;
+        font-size: 8px;
+      }
+      .configModuleRow button:disabled {
+        cursor: default;
+        opacity: 0.35;
+      }
+      .moduleQuantity {
+        display: block;
+        margin-top: 3px;
+        color: #9ce8ff;
+        font-size: 8px;
+        letter-spacing: 0.06em;
+      }
+      .configActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 13px;
+      }
+      .configActions #deployConfiguredAndroidBtn {
+        grid-column: 1 / -1;
+      }
+      .configStatus {
+        min-height: 14px;
+        margin-top: 8px;
+        text-align: center;
+        color: #ffd166;
+        font-size: 8px;
+        letter-spacing: 0.05em;
+      }
+      .debugModuleTools {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-top: 8px;
+      }
+      .debugModuleTools button {
+        border-radius: 4px;
+        padding: 8px;
+        font-size: 8px;
       }
       .startBox h1,
       .pauseBox h1,
@@ -717,7 +883,12 @@
           <div class="pill specPill" id="raidSpecPill">
             SPEC <b id="raidSpec">0</b>
           </div>
-          <div class="spacer"></div>
+          <div class="pill modulePill">
+            MC <b id="moduleCarrierProgress">0/20</b>
+          </div>
+          <div class="pill modulePill">
+            PKG <b id="modulePackageCount">0</b>
+          </div>
           <div class="pill">DMG <b id="damage">12</b></div>
         </div>
         <div id="hubTop" class="topbar">
@@ -770,7 +941,7 @@
             </button>
           </div>
           <div id="menuStatus" class="menuStatus"></div>
-          <div class="buildLabel">PROTOTYPE v49.1</div>
+          <div class="buildLabel">PROTOTYPE v50.2</div>
         </div>
       </div>
       <div id="resetConfirmOverlay">
@@ -827,12 +998,66 @@
           <button id="closeTestUpgradesBtn" class="closeTechBtn">BACK</button>
         </div>
       </div>
+      <div id="androidConfigOverlay">
+        <div class="androidConfigBox">
+          <div class="raidUpgradeHeader">
+            <div>
+              <h2>ANDROID CONFIGURATION</h2>
+              <span>DEPLOYMENT TERMINAL / PERSISTENT LOADOUT</span>
+            </div>
+          </div>
+          <div class="configCapacityGrid">
+            <div class="configCapacity">
+              <span>INSTALLED CAPACITY</span>
+              <strong id="installedCapacityText">0 / 15</strong>
+            </div>
+            <div class="configCapacity">
+              <span>RAID CARGO CAPACITY</span>
+              <strong id="cargoCapacityText">5</strong>
+            </div>
+          </div>
+          <div class="upgradeDetail debugTag">
+            v50.2 CHECKPOINT: ANDROID MODULE LOSS RULES ARE NOT ACTIVE YET
+          </div>
+          <div class="configSection">
+            <div class="configSectionTitle">
+              INSTALLED MODULES <span>ACTIVE ON DEPLOYMENT</span>
+            </div>
+            <div id="installedModuleList" class="upgradeList"></div>
+          </div>
+          <div class="configSection">
+            <div class="configSectionTitle">
+              HUB STORAGE <span>SAFE FROM RAID LOSS</span>
+            </div>
+            <div id="hubModuleList" class="upgradeList"></div>
+          </div>
+          <details class="configSection">
+            <summary class="configSectionTitle">
+              TEST MODULES <span class="debugTag">DEVELOPMENT TOOL</span>
+            </summary>
+            <div id="hubTestModuleList" class="upgradeList"></div>
+            <div class="debugModuleTools">
+              <button id="grantAllTestModulesBtn" class="secondaryBtn">
+                +1 OF EVERY MODULE</button
+              ><button id="clearTestModulesBtn" class="dangerBtn">
+                CLEAR HUB STORAGE
+              </button>
+            </div>
+          </details>
+          <div id="androidConfigStatus" class="configStatus"></div>
+          <div class="configActions">
+            <button id="closeAndroidConfigBtn" class="secondaryBtn">
+              CLOSE</button
+            ><button id="deployConfiguredAndroidBtn">DEPLOY ANDROID</button>
+          </div>
+        </div>
+      </div>
       <div id="dialogueBox" role="dialog" aria-live="polite">
         <div class="dialoguePortrait" id="dialoguePortrait">⌁</div>
         <div>
           <div class="dialogueSpeaker" id="dialogueSpeaker">OPERATOR</div>
           <div id="dialogueText"></div>
-          <div class="dialogueHint">TAP TO ADVANCE</div>
+          <div class="dialogueHint" id="dialogueHint">TAP TO COMPLETE</div>
         </div>
       </div>
       <div id="selfDestructConfirmOverlay">
@@ -890,8 +1115,8 @@
     </div>
     <script>
       // =====================================================================
-      // MICRO SURVIVORS v49.1
-      // Dialogue visibility fix built on the v49 communication framework.
+      // MICRO SURVIVORS v50.2
+      // Large Module Carriers, physical packages, and density testing.
       // =====================================================================
 
       // ---------------------------------------------------------------------
@@ -908,6 +1133,10 @@
           kills: document.getElementById("kills"),
           raidSpec: document.getElementById("raidSpec"),
           raidSpecPill: document.getElementById("raidSpecPill"),
+          moduleCarrierProgress: document.getElementById(
+            "moduleCarrierProgress",
+          ),
+          modulePackageCount: document.getElementById("modulePackageCount"),
           hubSpec: document.getElementById("hubSpec"),
           sectorSpec: document.getElementById("sectorSpec"),
           lostSpec: document.getElementById("lostSpec"),
@@ -945,6 +1174,31 @@
           testUpgradesOverlay: document.getElementById("testUpgradesOverlay"),
           testUpgradeList: document.getElementById("testUpgradeList"),
           closeTestUpgradesBtn: document.getElementById("closeTestUpgradesBtn"),
+          androidConfigOverlay: document.getElementById(
+            "androidConfigOverlay",
+          ),
+          installedCapacityText: document.getElementById(
+            "installedCapacityText",
+          ),
+          cargoCapacityText: document.getElementById("cargoCapacityText"),
+          installedModuleList: document.getElementById(
+            "installedModuleList",
+          ),
+          hubModuleList: document.getElementById("hubModuleList"),
+          hubTestModuleList: document.getElementById("hubTestModuleList"),
+          grantAllTestModulesBtn: document.getElementById(
+            "grantAllTestModulesBtn",
+          ),
+          clearTestModulesBtn: document.getElementById(
+            "clearTestModulesBtn",
+          ),
+          androidConfigStatus: document.getElementById("androidConfigStatus"),
+          closeAndroidConfigBtn: document.getElementById(
+            "closeAndroidConfigBtn",
+          ),
+          deployConfiguredAndroidBtn: document.getElementById(
+            "deployConfiguredAndroidBtn",
+          ),
           selfDestructBtn: document.getElementById("selfDestructBtn"),
           selfDestructConfirmOverlay: document.getElementById(
             "selfDestructConfirmOverlay",
@@ -973,16 +1227,61 @@
           dialoguePortrait: document.getElementById("dialoguePortrait"),
           dialogueSpeaker: document.getElementById("dialogueSpeaker"),
           dialogueText: document.getElementById("dialogueText"),
+          dialogueHint: document.getElementById("dialogueHint"),
         };
         const GRID_STEP = 80,
           GRID_COLS = 9,
           GRID_ROWS = 14,
           SECTOR_ONE_END = 210;
+        const UI_MOTION = Object.freeze({
+          duration: 0.18,
+          hiddenScale: 0.94,
+          offsetY: 8,
+        });
+        const PICKUP_RANGE = Object.freeze({
+          base: 42,
+          magnetLevelOne: 100,
+          magnetPerLevel: 35,
+        });
+        const MODULE_CARRIER_RULES = Object.freeze({
+          perSector: 20,
+          firstSpawnTime: 7,
+          spawnInterval: 10.4,
+          radius: 24,
+        });
+        function uiPopEase(value) {
+          const t = Math.max(0, Math.min(1, value));
+          const c1 = 1.35,
+            c3 = c1 + 1;
+          return 1 + c3 * (t - 1) ** 3 + c1 * (t - 1) ** 2;
+        }
         // ---------------------------------------------------------------------
         // PERSISTENT HUB SAVE
         // ---------------------------------------------------------------------
-        const SAVE_KEY = "microSurvivorsSave",
-          SAVE_VERSION = 1;
+        const SAVE_KEY = "microSurvivorsSaveV50Test",
+          LEGACY_SAVE_KEY = "microSurvivorsSave",
+          LEGACY_IMPORT_FLAG_KEY = "microSurvivorsSaveV50LegacyHandled",
+          SAVE_VERSION = 2,
+          LEGACY_SAVE_VERSION = 1;
+        const MODULE_UPGRADE_IDS = Object.freeze([
+          "heavyRounds",
+          "rapidFire",
+          "fleetFooted",
+          "maxVitality",
+          "piercing",
+          "explosiveRounds",
+          "ricochet",
+          "longReach",
+          "regeneration",
+          "addedBarrel",
+          "magnet",
+          "masterShots",
+        ]);
+        const MODULE_RULES = Object.freeze({
+          maxLevelPerType: 3,
+          baseInstalledCapacity: 15,
+          baseCargoCapacity: 5,
+        });
         const keys = new Set(),
           W = 540,
           H = 960,
@@ -1000,15 +1299,168 @@
           }
         }
         const CAN_SAVE = storageAvailable();
+        function isModuleUpgradeId(id) {
+          return MODULE_UPGRADE_IDS.includes(id);
+        }
+        function totalModuleCount(modules) {
+          return MODULE_UPGRADE_IDS.reduce(
+            (total, id) => total + Math.max(0, modules?.[id] || 0),
+            0,
+          );
+        }
+        function sanitizeModuleMap(
+          source,
+          { perTypeLimit = Infinity, totalLimit = Infinity } = {},
+        ) {
+          const result = {};
+          let remaining = Math.max(0, totalLimit);
+          for (const id of MODULE_UPGRADE_IDS) {
+            if (remaining <= 0) break;
+            const amount = Math.min(
+              remaining,
+              perTypeLimit,
+              Math.max(0, Math.floor(Number(source?.[id]) || 0)),
+            );
+            if (amount > 0) {
+              result[id] = amount;
+              remaining -= amount;
+            }
+          }
+          return result;
+        }
+        function createBlankAndroidLoadout() {
+          return { installedModules: {} };
+        }
+        function createDefaultAndroidBay() {
+          return {
+            installedCapacity: MODULE_RULES.baseInstalledCapacity,
+            cargoCapacity: MODULE_RULES.baseCargoCapacity,
+            android: createBlankAndroidLoadout(),
+          };
+        }
+        function sanitizeAndroidBay(source) {
+          const installedCapacity = Math.max(
+              MODULE_RULES.baseInstalledCapacity,
+              Math.floor(Number(source?.installedCapacity) || 0),
+            ),
+            cargoCapacity = Math.max(
+              MODULE_RULES.baseCargoCapacity,
+              Math.floor(Number(source?.cargoCapacity) || 0),
+            ),
+            rawAndroid = source?.android;
+          return {
+            installedCapacity,
+            cargoCapacity,
+            android:
+              rawAndroid === null
+                ? null
+                : {
+                    installedModules: sanitizeModuleMap(
+                      rawAndroid?.installedModules,
+                      {
+                        perTypeLimit: MODULE_RULES.maxLevelPerType,
+                        totalLimit: installedCapacity,
+                      },
+                    ),
+                  },
+          };
+        }
+        function normalizePersistentData(source) {
+          const androidBay = sanitizeAndroidBay(source?.androidBay);
+          return {
+            saveVersion: SAVE_VERSION,
+            hubInventory: {
+              researchSpec: Math.max(
+                0,
+                Math.floor(Number(source?.hubInventory?.researchSpec) || 0),
+              ),
+              modules: sanitizeModuleMap(source?.hubInventory?.modules),
+            },
+            androidBay,
+            seenDialogues: Array.isArray(source?.seenDialogues)
+              ? [
+                  ...new Set(
+                    source.seenDialogues.filter(
+                      (id) => typeof id === "string" && id.length <= 100,
+                    ),
+                  ),
+                ]
+              : [],
+          };
+        }
+        function parseStoredSave(key) {
+          const raw = localStorage.getItem(key);
+          if (!raw) return { state: "none", data: null };
+          try {
+            return { state: "parsed", data: JSON.parse(raw) };
+          } catch (e) {
+            return { state: "incompatible", data: null };
+          }
+        }
+        function validateModuleFoundation() {
+          const defaults = createDefaultAndroidBay(),
+            clamped = sanitizeModuleMap(
+              {
+                heavyRounds: 99,
+                rapidFire: 3,
+                fleetFooted: 3,
+                maxVitality: 3,
+                piercing: 3,
+                explosiveRounds: 3,
+                unknownModule: 99,
+              },
+              {
+                perTypeLimit: MODULE_RULES.maxLevelPerType,
+                totalLimit: MODULE_RULES.baseInstalledCapacity,
+              },
+            ),
+            migrated = normalizePersistentData({
+              saveVersion: LEGACY_SAVE_VERSION,
+              hubInventory: { researchSpec: 7 },
+              seenDialogues: ["foundation_test", "foundation_test"],
+            });
+          if (
+            defaults.installedCapacity !== 15 ||
+            defaults.cargoCapacity !== 5 ||
+            totalModuleCount(clamped) !== 15 ||
+            clamped.heavyRounds !== 3 ||
+            Object.prototype.hasOwnProperty.call(clamped, "unknownModule") ||
+            migrated.hubInventory.researchSpec !== 7 ||
+            migrated.seenDialogues.length !== 1 ||
+            totalModuleCount(
+              migrated.androidBay.android?.installedModules,
+            ) !== 0
+          )
+            throw new Error("Module foundation validation failed");
+        }
+        validateModuleFoundation();
         function readSave() {
           if (!CAN_SAVE) return { state: "unavailable", data: null };
           try {
-            const raw = localStorage.getItem(SAVE_KEY);
-            if (!raw) return { state: "none", data: null };
-            const data = JSON.parse(raw);
-            if (!data || data.saveVersion !== SAVE_VERSION)
-              return { state: "incompatible", data };
-            return { state: "valid", data };
+            const current = parseStoredSave(SAVE_KEY);
+            if (current.state === "incompatible") return current;
+            if (current.state === "parsed") {
+              if (!current.data || current.data.saveVersion !== SAVE_VERSION)
+                return { state: "incompatible", data: current.data };
+              return {
+                state: "valid",
+                data: normalizePersistentData(current.data),
+                source: "v50",
+              };
+            }
+            if (!localStorage.getItem(LEGACY_IMPORT_FLAG_KEY)) {
+              const legacy = parseStoredSave(LEGACY_SAVE_KEY);
+              if (
+                legacy.state === "parsed" &&
+                legacy.data?.saveVersion === LEGACY_SAVE_VERSION
+              )
+                return {
+                  state: "valid",
+                  data: normalizePersistentData(legacy.data),
+                  source: "legacy",
+                };
+            }
+            return { state: "none", data: null };
           } catch (e) {
             return { state: "incompatible", data: null };
           }
@@ -1022,11 +1474,14 @@
                 0,
                 Math.floor(game.hubInventory.researchSpec || 0),
               ),
+              modules: sanitizeModuleMap(game.hubInventory.modules),
             },
+            androidBay: sanitizeAndroidBay(game.androidBay),
             seenDialogues: [...(game.seenDialogues || [])],
           };
           try {
             localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+            localStorage.setItem(LEGACY_IMPORT_FLAG_KEY, "1");
             return true;
           } catch (e) {
             return false;
@@ -1036,6 +1491,7 @@
           if (!CAN_SAVE) return false;
           try {
             localStorage.removeItem(SAVE_KEY);
+            localStorage.setItem(LEGACY_IMPORT_FLAG_KEY, "1");
             return true;
           } catch (e) {
             return false;
@@ -1047,6 +1503,10 @@
             0,
             Math.floor(data.hubInventory?.researchSpec || 0),
           );
+          game.hubInventory.modules = sanitizeModuleMap(
+            data.hubInventory?.modules,
+          );
+          game.androidBay = sanitizeAndroidBay(data.androidBay);
           game.seenDialogues = Array.isArray(data.seenDialogues)
             ? [...new Set(data.seenDialogues)]
             : [];
@@ -1104,7 +1564,10 @@
         function continuePersistentGame() {
           const save = readSave();
           game = newGame();
-          if (save.state === "valid") applySaveData(save.data);
+          if (save.state === "valid") {
+            applySaveData(save.data);
+            if (save.source === "legacy") writeSave();
+          }
           enterHub();
         }
 
@@ -1300,6 +1763,13 @@
           playTone(520, 1240, 0.52, 0.02, "triangle", 0.1);
           playTone(980, 1760, 0.24, 0.012, "sine", 0.42);
         }
+        function playDeploymentSfx() {
+          ensureAudio();
+          playTone(1320, 520, 0.46, 0.018, "triangle");
+          playTone(620, 240, 0.38, 0.024, "sine", 0.08);
+          playTone(180, 82, 0.22, 0.032, "sine", 0.34);
+          playNoiseBurst(0.08, 0.008, "highpass", 1500, 0.8, 0.3);
+        }
         function playSelfDestructSfx() {
           ensureAudio();
           playTone(520, 390, 0.1, 0.025, "square");
@@ -1307,8 +1777,9 @@
           playTone(155, 42, 0.42, 0.085, "sawtooth", 0.25);
           playTone(740, 120, 0.2, 0.03, "triangle", 0.27);
         }
-        function playDialogueTick() {
-          playTone(880, 720, 0.025, 0.006, "square");
+        function playDialogueTick(delay = 0) {
+          const pitch = rand(0.94, 1.06);
+          playTone(920 * pitch, 720 * pitch, 0.018, 0.0038, "square", delay);
         }
 
         // ---------------------------------------------------------------------
@@ -1316,7 +1787,9 @@
         // ---------------------------------------------------------------------
         function ensureDialogueState() {
           if (!game.dialogue)
-            game.dialogue = { active: null, queue: [], delay: 0 };
+            game.dialogue = { active: null, queue: [], delay: 0, exitTimer: 0 };
+          if (!Number.isFinite(game.dialogue.exitTimer))
+            game.dialogue.exitTimer = 0;
           if (!Array.isArray(game.seenDialogues)) game.seenDialogues = [];
           return game.dialogue;
         }
@@ -1340,15 +1813,16 @@
         }
         function startNextDialogue() {
           const state = ensureDialogueState();
-          if (state.active || !state.queue.length) return;
+          if (state.active || state.exitTimer > 0 || !state.queue.length)
+            return;
           state.active = {
             ...state.queue.shift(),
             visibleChars: 0,
-            tickTimer: 0,
           };
           el.dialogueSpeaker.textContent = state.active.speaker;
           el.dialoguePortrait.textContent = state.active.portrait;
           el.dialogueText.textContent = "";
+          el.dialogueHint.textContent = "TAP TO COMPLETE";
           el.dialogueBox.classList.add("show");
         }
         function completeDialogue(id, remember = true) {
@@ -1356,6 +1830,7 @@
           if (!state.active || (id && state.active.id !== id)) return false;
           const finished = state.active;
           state.active = null;
+          state.exitTimer = UI_MOTION.duration;
           el.dialogueBox.classList.remove("show");
           if (
             remember &&
@@ -1366,7 +1841,6 @@
             writeSave();
           }
           finished.onComplete?.();
-          startNextDialogue();
           return true;
         }
         function advanceDialogue() {
@@ -1376,10 +1850,15 @@
           if (active.visibleChars < active.text.length) {
             active.visibleChars = active.text.length;
             el.dialogueText.textContent = active.text;
+            el.dialogueHint.textContent = "TAP TO DISMISS";
           } else completeDialogue(active.id, true);
         }
         function updateDialogue(dt) {
           const state = ensureDialogueState();
+          if (state.exitTimer > 0) {
+            state.exitTimer = Math.max(0, state.exitTimer - dt);
+            if (state.exitTimer === 0) startNextDialogue();
+          }
           if (state.delay > 0) {
             state.delay -= dt;
             if (state.delay <= 0 && game.scene === "hub")
@@ -1400,12 +1879,11 @@
           const after = Math.floor(active.visibleChars);
           if (after !== before) {
             el.dialogueText.textContent = active.text.slice(0, after);
-            active.tickTimer -= dt;
-            const char = active.text[after - 1];
-            if (active.tickTimer <= 0 && /[A-Za-z0-9]/.test(char)) {
-              playDialogueTick();
-              active.tickTimer = 0.045;
-            }
+            for (let i = before; i < after; i++)
+              if (/[A-Za-z0-9]/.test(active.text[i]))
+                playDialogueTick((i - before) * 0.006);
+            if (after >= active.text.length)
+              el.dialogueHint.textContent = "TAP TO DISMISS";
           }
         }
         function flashSpecHud() {
@@ -1535,10 +2013,12 @@
           {
             id: "magnet",
             name: "Magnet",
-            desc: "Pull nearby raid pickups toward you. Repeats increase collection range.",
+            desc: "Greatly increase pickup attraction range. Repeats extend it further.",
             apply: (g) => {
               g.player.magnetRange =
-                g.player.magnetRange > 0 ? g.player.magnetRange + 35 : 90;
+                g.player.magnetRange <= PICKUP_RANGE.base
+                  ? PICKUP_RANGE.magnetLevelOne
+                  : g.player.magnetRange + PICKUP_RANGE.magnetPerLevel;
             },
           },
           {
@@ -1553,7 +2033,7 @@
           {
             id: "deploymentTerminal",
             type: "terminal",
-            label: "Deployment Terminal",
+            label: "DEPLOYMENT TERMINAL",
             gridX: 5,
             gridY: 5,
             footprintW: 1,
@@ -1561,10 +2041,11 @@
             height: 50,
             solid: true,
             interactRangeCells: 1,
-            actionLabel: "DEPLOY ANDROID",
+            actionLabel: "CONFIGURE ANDROID",
             occludesPlayer: true,
             occlusionAlpha: 0.42,
             renderAlpha: 1,
+            labelVisibility: 0,
           },
         ];
         function hubObjectBounds(o) {
@@ -1673,7 +2154,7 @@
             pierce: 0,
             bounces: 0,
             shotCount: 1,
-            magnetRange: 0,
+            magnetRange: PICKUP_RANGE.base,
             critChance: 0,
             critMultiplier: 2,
             invuln: 0,
@@ -1690,7 +2171,8 @@
           return {
             ...baseCombatant(),
             role: "android",
-            raidInventory: { researchSpec: 0 },
+            raidInventory: { researchSpec: 0, modules: {} },
+            installedModules: {},
           };
         }
         function newGame() {
@@ -1707,30 +2189,39 @@
             xpNeed: 5,
             spawnTimer: 0.3,
             nextSpecEnemyTime: rand(20, 32),
+            sectorStartTime: 0,
+            moduleCarriersSpawned: 0,
+            nextModuleCarrierElapsed: MODULE_CARRIER_RULES.firstSpawnTime,
+            testModulesCollected: 0,
             flash: 0,
             shake: 0,
             specGlow: 0,
             raidTransition: null,
             upgradeLevels: {},
-            hubInventory: { researchSpec: 0 },
+            hubInventory: { researchSpec: 0, modules: {} },
+            androidBay: createDefaultAndroidBay(),
             seenDialogues: [],
-            dialogue: { active: null, queue: [], delay: 0 },
+            dialogue: { active: null, queue: [], delay: 0, exitTimer: 0 },
             hubPlayer,
             android: null,
             player: hubPlayer,
             sector: 0,
             sectorPhase: "idle",
             sectorDecisionOpen: false,
+            sectorCompletion: null,
+            hubConfigOpen: false,
             enemies: [],
             bullets: [],
             gems: [],
             healthDrops: [],
             specDrops: [],
+            modulePackages: [],
             particles: [],
             impacts: [],
             explosions: [],
             carrierBursts: [],
             specAcquireEffects: [],
+            moduleAcquireEffects: [],
             spawnWarnings: [],
             pendingSpawns: [],
             damageNumbers: [],
@@ -1739,13 +2230,16 @@
         function resetAll() {
           resetJoystick();
           game = newGame();
-          el.gameOver.style.display = "none";
+          resetAnimatedOverlay(el.gameOver);
+          resetAnimatedOverlay(el.sectorOverlay);
           el.upgradeOverlay.style.display = "none";
           el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
+          if (el.androidConfigOverlay)
+            el.androidConfigOverlay.style.display = "none";
           el.startOverlay.style.display = "flex";
           if (el.resetConfirmOverlay)
             el.resetConfirmOverlay.style.display = "none";
@@ -1771,6 +2265,10 @@
             xpNeed: 5,
             spawnTimer: 0.3,
             nextSpecEnemyTime: rand(20, 32),
+            sectorStartTime: 0,
+            moduleCarriersSpawned: 0,
+            nextModuleCarrierElapsed: MODULE_CARRIER_RULES.firstSpawnTime,
+            testModulesCollected: 0,
             flash: 0,
             shake: 0,
             specGlow: 0,
@@ -1781,28 +2279,31 @@
             sector: 1,
             sectorPhase: "active",
             sectorDecisionOpen: false,
+            sectorCompletion: null,
             enemies: [],
             bullets: [],
             gems: [],
             healthDrops: [],
             specDrops: [],
+            modulePackages: [],
             particles: [],
             impacts: [],
             explosions: [],
             carrierBursts: [],
             specAcquireEffects: [],
+            moduleAcquireEffects: [],
             spawnWarnings: [],
             pendingSpawns: [],
             damageNumbers: [],
           });
-          el.gameOver.style.display = "none";
+          resetAnimatedOverlay(el.gameOver);
           el.upgradeOverlay.style.display = "none";
           el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
-          el.sectorOverlay.style.display = "none";
+          resetAnimatedOverlay(el.sectorOverlay);
           if (el.threatNotice) {
             el.threatNotice.classList.remove("show");
             el.threatNotice.style.display = "none";
@@ -1822,6 +2323,8 @@
           game.sector = 0;
           game.sectorPhase = "idle";
           game.sectorDecisionOpen = false;
+          game.sectorCompletion = null;
+          game.hubConfigOpen = false;
           Object.assign(game.hubPlayer, {
             x: WORLD_W / 2,
             y: WORLD_H / 2 + 170,
@@ -1829,17 +2332,22 @@
             moving: false,
             moveStrength: 0,
           });
-          for (const o of HUB_OBJECTS) o.renderAlpha = 1;
+          for (const o of HUB_OBJECTS) {
+            o.renderAlpha = 1;
+            o.labelVisibility = 0;
+          }
           game.enemies = [];
           game.bullets = [];
           game.gems = [];
           game.healthDrops = [];
           game.specDrops = [];
+          game.modulePackages = [];
           game.particles = [];
           game.impacts = [];
           game.explosions = [];
           game.carrierBursts = [];
           game.specAcquireEffects = [];
+          game.moduleAcquireEffects = [];
           game.specGlow = 0;
           game.raidTransition = null;
           game.upgradeLevels = {};
@@ -1849,6 +2357,7 @@
           const dialogueState = ensureDialogueState();
           dialogueState.active = null;
           dialogueState.queue = [];
+          dialogueState.exitTimer = 0;
           dialogueState.delay = game.seenDialogues.includes(
             "ftue_deployment_terminal",
           )
@@ -1861,8 +2370,10 @@
             el.raidUpgradesOverlay.style.display = "none";
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
-          el.gameOver.style.display = "none";
-          el.sectorOverlay.style.display = "none";
+          if (el.androidConfigOverlay)
+            el.androidConfigOverlay.style.display = "none";
+          resetAnimatedOverlay(el.gameOver);
+          resetAnimatedOverlay(el.sectorOverlay);
           if (el.threatNotice) {
             el.threatNotice.classList.remove("show");
             el.threatNotice.style.display = "none";
@@ -1873,8 +2384,20 @@
         function deployArena() {
           if (game.scene !== "hub") return;
           ensureAudio();
+          closeAndroidConfiguration();
           resetArena();
+          applyConfiguredModulesToRaid();
           game.scene = "arena";
+          game.paused = true;
+          game.raidTransition = {
+            type: "deploy",
+            phase: "arrival",
+            elapsed: 0,
+            duration: 1.45,
+            x: game.player.x,
+            y: game.player.y,
+          };
+          playDeploymentSfx();
           syncSceneUi();
           resetJoystick();
         }
@@ -1892,6 +2415,187 @@
         }
         function getUpgradeLevel(id) {
           return game?.upgradeLevels?.[id] || 0;
+        }
+        function ensureAndroidConfiguration() {
+          if (!game.androidBay) game.androidBay = createDefaultAndroidBay();
+          if (
+            !Number.isFinite(game.androidBay.installedCapacity) ||
+            game.androidBay.installedCapacity <
+              MODULE_RULES.baseInstalledCapacity
+          )
+            game.androidBay.installedCapacity =
+              MODULE_RULES.baseInstalledCapacity;
+          if (
+            !Number.isFinite(game.androidBay.cargoCapacity) ||
+            game.androidBay.cargoCapacity < MODULE_RULES.baseCargoCapacity
+          )
+            game.androidBay.cargoCapacity = MODULE_RULES.baseCargoCapacity;
+          if (!game.androidBay.android)
+            game.androidBay.android = createBlankAndroidLoadout();
+          if (!game.androidBay.android.installedModules)
+            game.androidBay.android.installedModules = {};
+          if (!game.hubInventory.modules) game.hubInventory.modules = {};
+          return game.androidBay;
+        }
+        function installedModuleLevels() {
+          return totalModuleCount(
+            ensureAndroidConfiguration().android.installedModules,
+          );
+        }
+        function setAndroidConfigStatus(message = "") {
+          if (el.androidConfigStatus)
+            el.androidConfigStatus.textContent = message;
+        }
+        function canInstallHubModule(id) {
+          if (!isModuleUpgradeId(id)) return false;
+          const bay = ensureAndroidConfiguration(),
+            installed = bay.android.installedModules,
+            stored = Math.max(0, game.hubInventory.modules[id] || 0);
+          return (
+            stored > 0 &&
+            (installed[id] || 0) < MODULE_RULES.maxLevelPerType &&
+            totalModuleCount(installed) < bay.installedCapacity
+          );
+        }
+        function bankHubModule(id, amount = 1) {
+          if (!isModuleUpgradeId(id)) return false;
+          ensureAndroidConfiguration();
+          const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+          if (!safeAmount) return false;
+          game.hubInventory.modules[id] =
+            (game.hubInventory.modules[id] || 0) + safeAmount;
+          return true;
+        }
+        function installHubModule(id) {
+          const upgrade = UPGRADE_POOL.find((u) => u.id === id),
+            bay = ensureAndroidConfiguration(),
+            installed = bay.android.installedModules;
+          if (!upgrade || !canInstallHubModule(id)) {
+            const stored = game.hubInventory.modules[id] || 0;
+            if (!stored) setAndroidConfigStatus("NO STORED MODULE AVAILABLE");
+            else if ((installed[id] || 0) >= MODULE_RULES.maxLevelPerType)
+              setAndroidConfigStatus(`${upgrade?.name || "MODULE"} IS ALREADY LV3`);
+            else setAndroidConfigStatus("INSTALLED CAPACITY IS FULL");
+            renderAndroidConfiguration(false);
+            return false;
+          }
+          game.hubInventory.modules[id]--;
+          if (game.hubInventory.modules[id] <= 0)
+            delete game.hubInventory.modules[id];
+          installed[id] = (installed[id] || 0) + 1;
+          setAndroidConfigStatus(`${upgrade.name.toUpperCase()} INSTALLED`);
+          writeSave();
+          renderAndroidConfiguration(false);
+          return true;
+        }
+        function removeInstalledModule(id) {
+          const upgrade = UPGRADE_POOL.find((u) => u.id === id),
+            installed = ensureAndroidConfiguration().android.installedModules;
+          if (!upgrade || (installed[id] || 0) <= 0) return false;
+          installed[id]--;
+          if (installed[id] <= 0) delete installed[id];
+          bankHubModule(id, 1);
+          setAndroidConfigStatus(`${upgrade.name.toUpperCase()} RETURNED TO STORAGE`);
+          writeSave();
+          renderAndroidConfiguration(false);
+          return true;
+        }
+        function grantHubTestModule(id) {
+          const upgrade = UPGRADE_POOL.find((u) => u.id === id);
+          if (!upgrade || !bankHubModule(id, 1)) return;
+          setAndroidConfigStatus(`${upgrade.name.toUpperCase()} ADDED TO HUB STORAGE`);
+          writeSave();
+          renderAndroidConfiguration(false);
+        }
+        function grantAllHubTestModules() {
+          for (const upgrade of UPGRADE_POOL) bankHubModule(upgrade.id, 1);
+          setAndroidConfigStatus("ONE OF EVERY MODULE ADDED TO HUB STORAGE");
+          writeSave();
+          renderAndroidConfiguration(false);
+        }
+        function clearHubTestModules() {
+          ensureAndroidConfiguration();
+          game.hubInventory.modules = {};
+          setAndroidConfigStatus("HUB MODULE STORAGE CLEARED");
+          writeSave();
+          renderAndroidConfiguration(false);
+        }
+        function renderAndroidConfiguration(clearStatus = true) {
+          const bay = ensureAndroidConfiguration(),
+            installed = bay.android.installedModules,
+            used = totalModuleCount(installed);
+          if (clearStatus) setAndroidConfigStatus();
+          if (el.installedCapacityText)
+            el.installedCapacityText.textContent = `${used} / ${bay.installedCapacity}`;
+          if (el.cargoCapacityText)
+            el.cargoCapacityText.textContent = `${bay.cargoCapacity} SLOTS`;
+          const equipped = UPGRADE_POOL.filter((u) => (installed[u.id] || 0) > 0);
+          el.installedModuleList.innerHTML = equipped.length
+            ? equipped
+                .map(
+                  (u) =>
+                    `<div class="configModuleRow"><div><strong>${u.name}</strong><span class="moduleQuantity">INSTALLED LV ${installed[u.id]} / ${MODULE_RULES.maxLevelPerType}</span></div><button class="secondaryBtn" data-remove-module="${u.id}">REMOVE -1</button></div>`,
+                )
+                .join("")
+            : '<div class="upgradeEmpty">NO MODULES INSTALLED</div>';
+          const stored = UPGRADE_POOL.filter(
+            (u) => (game.hubInventory.modules[u.id] || 0) > 0,
+          );
+          el.hubModuleList.innerHTML = stored.length
+            ? stored
+                .map((u) => {
+                  const allowed = canInstallHubModule(u.id);
+                  return `<div class="configModuleRow"><div><strong>${u.name}</strong><span class="moduleQuantity">STORED ×${game.hubInventory.modules[u.id]}</span></div><button data-install-module="${u.id}"${allowed ? "" : " disabled"}>INSTALL +1</button></div>`;
+                })
+                .join("")
+            : '<div class="upgradeEmpty">NO MODULES IN HUB STORAGE</div>';
+          el.hubTestModuleList.innerHTML = UPGRADE_POOL.map(
+            (u) =>
+              `<div class="configModuleRow"><div><strong>${u.name}</strong><span class="moduleQuantity">STORED ×${game.hubInventory.modules[u.id] || 0}</span></div><button class="secondaryBtn" data-grant-hub-module="${u.id}">+1 STORAGE</button></div>`,
+          ).join("");
+          for (const button of el.installedModuleList.querySelectorAll(
+            "[data-remove-module]",
+          ))
+            button.onclick = () =>
+              removeInstalledModule(button.dataset.removeModule);
+          for (const button of el.hubModuleList.querySelectorAll(
+            "[data-install-module]",
+          ))
+            button.onclick = () => installHubModule(button.dataset.installModule);
+          for (const button of el.hubTestModuleList.querySelectorAll(
+            "[data-grant-hub-module]",
+          ))
+            button.onclick = () =>
+              grantHubTestModule(button.dataset.grantHubModule);
+        }
+        function openAndroidConfiguration() {
+          if (game?.scene !== "hub") return;
+          ensureAndroidConfiguration();
+          game.hubConfigOpen = true;
+          resetJoystick();
+          game.player.moving = false;
+          game.player.moveStrength = 0;
+          renderAndroidConfiguration();
+          el.androidConfigOverlay.style.display = "flex";
+        }
+        function closeAndroidConfiguration() {
+          if (!game?.hubConfigOpen) return;
+          game.hubConfigOpen = false;
+          el.androidConfigOverlay.style.display = "none";
+          setAndroidConfigStatus();
+          resetJoystick();
+        }
+        function applyConfiguredModulesToRaid() {
+          const bay = ensureAndroidConfiguration(),
+            installed = sanitizeModuleMap(bay.android.installedModules, {
+              perTypeLimit: MODULE_RULES.maxLevelPerType,
+              totalLimit: bay.installedCapacity,
+            });
+          game.android.installedModules = { ...installed };
+          game.upgradeLevels = { ...installed };
+          for (const upgrade of UPGRADE_POOL)
+            for (let level = 0; level < (installed[upgrade.id] || 0); level++)
+              upgrade.apply(game);
         }
         function renderRaidUpgrades() {
           if (!el.raidUpgradeList) return;
@@ -1943,7 +2647,8 @@
             game.scene !== "arena" ||
             !game.running ||
             game.choosing ||
-            game.sectorDecisionOpen
+            game.sectorDecisionOpen ||
+            game.raidTransition
           )
             return;
           game.paused = !!value;
@@ -2120,6 +2825,79 @@
             delay: TELEGRAPH_TIME,
           });
         }
+        function spawnModuleCarrier() {
+          const margin = 58,
+            TELEGRAPH_TIME = 0.92;
+          let x, y;
+          const side = Math.floor(Math.random() * 4);
+          if (side === 0) {
+            x = rand(-margin, WORLD_W + margin);
+            y = -margin;
+          } else if (side === 1) {
+            x = WORLD_W + margin;
+            y = rand(-margin, WORLD_H + margin);
+          } else if (side === 2) {
+            x = rand(-margin, WORLD_W + margin);
+            y = WORLD_H + margin;
+          } else {
+            x = -margin;
+            y = rand(-margin, WORLD_H + margin);
+          }
+          let warnX,
+            warnY,
+            inwardX = 0,
+            inwardY = 0;
+          if (side === 0) {
+            warnX = clamp(x, 0, WORLD_W);
+            warnY = 0;
+            inwardY = 1;
+          } else if (side === 1) {
+            warnX = WORLD_W;
+            warnY = clamp(y, 0, WORLD_H);
+            inwardX = -1;
+          } else if (side === 2) {
+            warnX = clamp(x, 0, WORLD_W);
+            warnY = WORLD_H;
+            inwardY = -1;
+          } else {
+            warnX = 0;
+            warnY = clamp(y, 0, WORLD_H);
+            inwardX = 1;
+          }
+          game.spawnWarnings.push({
+            x: warnX,
+            y: warnY,
+            inwardX,
+            inwardY,
+            life: TELEGRAPH_TIME,
+            maxLife: TELEGRAPH_TIME,
+            color: "#97ff4d",
+            size: 18,
+          });
+          const elapsed = Math.max(0, game.time - (game.sectorStartTime || 0)),
+            hp = 34 + elapsed * 0.16;
+          game.pendingSpawns.push({
+            enemy: {
+              type: "moduleCarrier",
+              x,
+              y,
+              r: MODULE_CARRIER_RULES.radius,
+              speed: rand(48, 65) + elapsed * 0.07,
+              hp,
+              maxHp: hp,
+              damage: 12,
+              color: "#97ff4d",
+              xp: 0,
+              modulePackage: true,
+              roamTargetX: rand(85, WORLD_W - 85),
+              roamTargetY: rand(85, WORLD_H - 85),
+              roamRetarget: rand(1.7, 3.2),
+            },
+            delay: TELEGRAPH_TIME,
+          });
+          game.moduleCarriersSpawned++;
+          updateHud();
+        }
         function nearestEnemy(maxDistance = Infinity) {
           let best = null,
             bd = maxDistance * maxDistance;
@@ -2230,6 +3008,8 @@
             r: radius,
             life: 0.48,
             maxLife: 0.48,
+            color: "#ffd166",
+            fill: "rgba(255,209,102,.13)",
           });
           burst(source.x, source.y, "#ffd166", 26);
           burst(source.x, source.y, "#ffb832", 18);
@@ -2244,6 +3024,21 @@
             )
               damageEnemy(other, damage, "#ffd166");
           }
+        }
+        function moduleCarrierBurst(source) {
+          game.carrierBursts.push({
+            x: source.x,
+            y: source.y,
+            r: 112,
+            life: 0.52,
+            maxLife: 0.52,
+            color: "#97ff4d",
+            fill: "rgba(151,255,77,.14)",
+          });
+          burst(source.x, source.y, "#97ff4d", 30);
+          burst(source.x, source.y, "#e5ffc4", 14);
+          game.shake = Math.max(game.shake, 7);
+          playCarrierBurstSfx();
         }
         function safeLootPosition(x, y, r = 6) {
           const inset = Math.max(18, r + 8);
@@ -2264,6 +3059,54 @@
           burst(p.x, p.y, "#ffd166", 18);
           burst(p.x, p.y, "#fff0b0", 8);
           playSpecAcquireSfx();
+        }
+        function modulePackageFeedback() {
+          const p = game.player;
+          game.moduleAcquireEffects.push({
+            life: 0.92,
+            maxLife: 0.92,
+            text: "MODULE PACKAGE RECOVERED",
+          });
+          burst(p.x, p.y, "#97ff4d", 18);
+          burst(p.x, p.y, "#e5ffc4", 8);
+          playXpSfx();
+        }
+        function clearGroundModulePackages(withEffects = false) {
+          if (withEffects)
+            for (const modulePackage of game.modulePackages) {
+              burst(modulePackage.x, modulePackage.y, "#97ff4d", 6);
+              game.explosions.push({
+                x: modulePackage.x,
+                y: modulePackage.y,
+                r: 24,
+                life: 0.2,
+                maxLife: 0.2,
+                color: "#97ff4d",
+                fill: "rgba(151,255,77,.12)",
+                lineWidth: 1.5,
+              });
+            }
+          game.modulePackages = [];
+        }
+        function updateModulePackagePickups(dt) {
+          const p = game.player;
+          for (const modulePackage of game.modulePackages) {
+            modulePackage.bob += dt * 3.6;
+            let d = Math.hypot(modulePackage.x - p.x, modulePackage.y - p.y);
+            const magnetRange = p.magnetRange || 0;
+            if (magnetRange > 0 && d < magnetRange && d > 1) {
+              const pull = clamp((magnetRange + 35 - d) * 7, 90, 650);
+              modulePackage.x += ((p.x - modulePackage.x) / d) * pull * dt;
+              modulePackage.y += ((p.y - modulePackage.y) / d) * pull * dt;
+              d = Math.hypot(modulePackage.x - p.x, modulePackage.y - p.y);
+            }
+            if (d < p.r + modulePackage.r + 5) {
+              modulePackage.dead = true;
+              game.testModulesCollected++;
+              modulePackageFeedback();
+            }
+          }
+          game.modulePackages = game.modulePackages.filter((m) => !m.dead);
         }
         function damageEnemy(
           e,
@@ -2290,20 +3133,23 @@
             e.dead = true;
             game.kills++;
             if (e.type === "researchCarrier") researchCarrierExplosion(e);
+            else if (e.type === "moduleCarrier") moduleCarrierBurst(e);
             const xpR = e.xpType === "brute" ? 6 : 5,
               xpPos = safeLootPosition(e.x, e.y, xpR),
               specPos = safeLootPosition(e.x, e.y, 9),
-              healthPos = safeLootPosition(e.x, e.y, 5);
-            game.gems.push({
-              pickupType: "xp",
-              extractionBehavior: "absorb",
-              x: xpPos.x,
-              y: xpPos.y,
-              r: xpR,
-              xp: e.xp || 1,
-              bob: Math.random() * 6.28,
-              xpType: e.xpType || "rookie",
-            });
+              healthPos = safeLootPosition(e.x, e.y, 5),
+              modulePos = safeLootPosition(e.x, e.y, 11);
+            if ((e.xp || 0) > 0)
+              game.gems.push({
+                pickupType: "xp",
+                extractionBehavior: "absorb",
+                x: xpPos.x,
+                y: xpPos.y,
+                r: xpR,
+                xp: e.xp,
+                bob: Math.random() * 6.28,
+                xpType: e.xpType || "rookie",
+              });
             if (e.researchSpec)
               game.specDrops.push({
                 pickupType: "spec",
@@ -2313,6 +3159,19 @@
                 r: 9,
                 amount: e.researchSpec,
                 bob: Math.random() * 6.28,
+              });
+            if (e.modulePackage)
+              game.modulePackages.push({
+                pickupType: "modulePackage",
+                extractionBehavior: "discard",
+                x: modulePos.x,
+                y: modulePos.y,
+                r: 11,
+                moduleId:
+                  MODULE_UPGRADE_IDS[
+                    Math.floor(Math.random() * MODULE_UPGRADE_IDS.length)
+                  ],
+                bob: Math.random() * Math.PI * 2,
               });
             if (Math.random() < 0.01)
               game.healthDrops.push({
@@ -2411,7 +3270,7 @@
             el.raidUpgradesOverlay.style.display = "none";
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
-          el.sectorOverlay.style.display = "none";
+          resetAnimatedOverlay(el.sectorOverlay);
           game.sectorDecisionOpen = false;
           el.finalTime.textContent = fmtTime(game.time);
           el.finalKills.textContent = game.kills;
@@ -2421,9 +3280,43 @@
               game.android?.raidInventory?.researchSpec || 0;
           startRaidTransition("combatDeath");
         }
+        function resetAnimatedOverlay(overlay) {
+          if (!overlay) return;
+          overlay.classList.remove("show", "closing");
+          overlay.style.display = "none";
+          for (const button of overlay.querySelectorAll("button"))
+            button.disabled = false;
+        }
+        function showAnimatedOverlay(overlay) {
+          if (!overlay) return;
+          overlay.classList.remove("show", "closing");
+          overlay.style.display = "flex";
+          for (const button of overlay.querySelectorAll("button"))
+            button.disabled = false;
+          void overlay.offsetWidth;
+          overlay.classList.add("show");
+        }
+        function hideAnimatedOverlay(overlay, onHidden) {
+          if (!overlay || overlay.classList.contains("closing")) return false;
+          overlay.classList.add("closing");
+          for (const button of overlay.querySelectorAll("button"))
+            button.disabled = true;
+          overlay.classList.remove("show");
+          setTimeout(() => {
+            overlay.style.display = "none";
+            overlay.classList.remove("closing");
+            for (const button of overlay.querySelectorAll("button"))
+              button.disabled = false;
+            onHidden?.();
+          }, UI_MOTION.duration * 1000);
+          return true;
+        }
         function showGameOverResults() {
           game.raidTransition = null;
-          el.gameOver.style.display = "flex";
+          showAnimatedOverlay(el.gameOver);
+        }
+        function returnToHubFromGameOver() {
+          hideAnimatedOverlay(el.gameOver, enterHub);
         }
         function updateHud() {
           const p = game.player,
@@ -2433,6 +3326,10 @@
           el.level.textContent = game.level;
           el.kills.textContent = game.kills;
           if (el.raidSpec) el.raidSpec.textContent = raidSpec;
+          if (el.moduleCarrierProgress)
+            el.moduleCarrierProgress.textContent = `${game.moduleCarriersSpawned || 0}/${MODULE_CARRIER_RULES.perSector}`;
+          if (el.modulePackageCount)
+            el.modulePackageCount.textContent = game.testModulesCollected || 0;
           if (el.hubSpec) el.hubSpec.textContent = hubSpec;
           if (el.sectorSpec) el.sectorSpec.textContent = raidSpec;
           el.damage.textContent = Math.round(p.damage);
@@ -2568,10 +3465,25 @@
         // HUB AND RAID UPDATE PIPELINE
         // ---------------------------------------------------------------------
         function updateHub(dt) {
+          if (game.hubConfigOpen) {
+            resetJoystick();
+            game.player.moving = false;
+            game.player.moveStrength = 0;
+            return;
+          }
           movementInput(dt);
           updateHubObjectOcclusion(dt);
           const active = getActiveHubObject();
           game.activeHubObject = active;
+          for (const object of HUB_OBJECTS) {
+            const target = object === active ? 1 : 0,
+              current = object.labelVisibility || 0,
+              step = dt / UI_MOTION.duration;
+            object.labelVisibility =
+              target > current
+                ? Math.min(target, current + step)
+                : Math.max(target, current - step);
+          }
           el.interactBtn.style.display = active ? "block" : "none";
           if (active)
             el.interactBtn.textContent = active.actionLabel || "INTERACT";
@@ -2582,7 +3494,7 @@
           if (!o) return;
           if (o.type === "terminal") {
             completeDialogue("ftue_deployment_terminal", true);
-            deployArena();
+            openAndroidConfiguration();
           }
         }
         function startRaidTransition(type) {
@@ -2591,12 +3503,13 @@
           game.paused = true;
           game.choosing = false;
           game.sectorDecisionOpen = false;
+          game.sectorCompletion = null;
           game.player.moving = false;
           game.player.moveStrength = 0;
           game.spawnWarnings = [];
           game.pendingSpawns = [];
           game.bullets = [];
-          if (el.sectorOverlay) el.sectorOverlay.style.display = "none";
+          resetAnimatedOverlay(el.sectorOverlay);
           if (el.pauseOverlay) el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
@@ -2629,6 +3542,7 @@
               }
             }
             game.healthDrops = game.healthDrops.filter((h) => !h.dead);
+            clearGroundModulePackages(true);
             game.shake = 0;
           } else {
             game.raidTransition = {
@@ -2696,11 +3610,10 @@
           playExtractionSfx();
           updateHud();
         }
-        function updateRaidTransition(dt) {
-          const tr = game.raidTransition;
-          if (!tr) return;
+        function updateRaidPresentationEffects(dt) {
           game.specGlow = Math.max(0, (game.specGlow || 0) - dt);
           for (const fx of game.specAcquireEffects) fx.life -= dt;
+          for (const fx of game.moduleAcquireEffects) fx.life -= dt;
           for (const q of game.particles) {
             q.x += q.vx * dt;
             q.y += q.vy * dt;
@@ -2708,12 +3621,49 @@
             q.vy *= 0.985;
             q.life -= dt;
           }
+          for (const im of game.impacts) im.life -= dt;
           for (const ex of game.explosions) ex.life -= dt;
+          for (const cb of game.carrierBursts) cb.life -= dt;
+          for (const n of game.damageNumbers) {
+            n.y += n.vy * dt;
+            n.vy *= 0.97;
+            n.life -= dt;
+          }
           game.particles = game.particles.filter((q) => q.life > 0);
+          game.impacts = game.impacts.filter((im) => im.life > 0);
           game.explosions = game.explosions.filter((ex) => ex.life > 0);
+          game.carrierBursts = game.carrierBursts.filter((cb) => cb.life > 0);
           game.specAcquireEffects = game.specAcquireEffects.filter(
             (fx) => fx.life > 0,
           );
+          game.moduleAcquireEffects = game.moduleAcquireEffects.filter(
+            (fx) => fx.life > 0,
+          );
+          game.damageNumbers = game.damageNumbers.filter((n) => n.life > 0);
+        }
+        function updateRaidTransition(dt) {
+          const tr = game.raidTransition;
+          if (!tr) return;
+          updateRaidPresentationEffects(dt);
+          if (tr.type === "deploy") {
+            tr.elapsed += dt;
+            game.shake = 0;
+            if (tr.elapsed >= tr.duration) {
+              game.raidTransition = null;
+              game.paused = false;
+              game.player.fireTimer = 0.2;
+              game.spawnTimer = 0.3;
+              resetJoystick();
+              requestDialogue({
+                id: "ftue_first_raid",
+                once: true,
+                speaker: "OPERATOR",
+                text: "Hostile signatures detected. Eliminate the threat, recover anything of value, and bring the Android home.",
+              });
+              updateHud();
+            }
+            return;
+          }
           if (tr.type === "extract" && tr.phase === "recovery") {
             tr.elapsed += dt;
             tr.pullStep = 1 - Math.exp(-10 * dt);
@@ -2753,8 +3703,25 @@
           showThreatNotice();
           updateHud();
         }
+        function updateSectorCompletion(dt) {
+          const completion = game.sectorCompletion;
+          if (!completion) return;
+          updateRaidPresentationEffects(dt);
+          game.shake = Math.max(0, game.shake - dt * 18);
+          completion.elapsed += dt;
+          if (completion.elapsed >= completion.duration) {
+            game.sectorCompletion = null;
+            showAnimatedOverlay(el.sectorOverlay);
+            updateHud();
+          }
+        }
         function maybeOpenSectorDecision() {
-          if (game.sectorPhase !== "cleanup" || game.sectorDecisionOpen) return;
+          if (
+            game.sectorPhase !== "cleanup" ||
+            game.sectorDecisionOpen ||
+            game.sectorCompletion
+          )
+            return;
           if (
             game.enemies.length === 0 &&
             game.pendingSpawns.length === 0 &&
@@ -2767,21 +3734,45 @@
             game.player.moving = false;
             game.player.moveStrength = 0;
             el.sectorTitle.textContent = `SECTOR ${game.sector} CLEARED`;
-            el.sectorOverlay.style.display = "flex";
+            resetAnimatedOverlay(el.sectorOverlay);
+            game.sectorCompletion = {
+              elapsed: 0,
+              duration: 0.86,
+              sector: game.sector,
+            };
           }
         }
         function continueRaid() {
-          if (!game.sectorDecisionOpen || game.scene !== "arena") return;
-          game.sectorDecisionOpen = false;
-          game.sector++;
-          game.sectorPhase = "active";
-          game.paused = false;
-          game.spawnTimer = 0.3;
-          el.sectorOverlay.style.display = "none";
-          resetJoystick();
+          if (
+            !game.sectorDecisionOpen ||
+            game.scene !== "arena" ||
+            game.sectorCompletion
+          )
+            return;
+          hideAnimatedOverlay(el.sectorOverlay, () => {
+            clearGroundModulePackages(true);
+            game.sectorDecisionOpen = false;
+            game.sector++;
+            game.sectorPhase = "active";
+            game.paused = false;
+            game.spawnTimer = 0.3;
+            game.sectorStartTime = game.time;
+            game.moduleCarriersSpawned = 0;
+            game.nextModuleCarrierElapsed =
+              MODULE_CARRIER_RULES.firstSpawnTime;
+            game.testModulesCollected = 0;
+            resetJoystick();
+          });
         }
         function extractRaid() {
           if (game.scene !== "arena" || game.raidTransition) return;
+          if (game.sectorDecisionOpen) {
+            if (game.sectorCompletion) return;
+            hideAnimatedOverlay(el.sectorOverlay, () =>
+              startRaidTransition("extract"),
+            );
+            return;
+          }
           startRaidTransition("extract");
         }
         function selfDestructRaid() {
@@ -2793,6 +3784,10 @@
         function updateArena(dt) {
           if (game.raidTransition) {
             updateRaidTransition(dt);
+            return;
+          }
+          if (game.sectorCompletion) {
+            updateSectorCompletion(dt);
             return;
           }
           if (!game.running || game.paused || game.choosing) return;
@@ -2807,6 +3802,7 @@
           game.shake = Math.max(0, game.shake - dt * 16);
           game.specGlow = Math.max(0, (game.specGlow || 0) - dt);
           for (const fx of game.specAcquireEffects) fx.life -= dt;
+          for (const fx of game.moduleAcquireEffects) fx.life -= dt;
           const p = game.player;
           movementInput(dt);
           p.invuln = Math.max(0, p.invuln - dt);
@@ -2839,6 +3835,19 @@
             spawnResearchEnemy();
             game.nextSpecEnemyTime = game.time + rand(34, 46);
           }
+          const sectorElapsed = Math.max(
+            0,
+            game.time - (game.sectorStartTime || 0),
+          );
+          if (
+            game.sectorPhase === "active" &&
+            game.moduleCarriersSpawned < MODULE_CARRIER_RULES.perSector &&
+            sectorElapsed >= game.nextModuleCarrierElapsed
+          ) {
+            spawnModuleCarrier();
+            game.nextModuleCarrierElapsed +=
+              MODULE_CARRIER_RULES.spawnInterval;
+          }
           for (const b of game.bullets) {
             b.x += b.vx * dt;
             b.y += b.vy * dt;
@@ -2848,15 +3857,22 @@
             let targetX = p.x,
               targetY = p.y,
               speedScale = 1;
-            if (e.type === "researchCarrier") {
+            if (
+              e.type === "researchCarrier" ||
+              e.type === "moduleCarrier"
+            ) {
               e.roamRetarget = (e.roamRetarget ?? 0) - dt;
               const roamDx = (e.roamTargetX ?? WORLD_W / 2) - e.x,
                 roamDy = (e.roamTargetY ?? WORLD_H / 2) - e.y,
                 roamDist = Math.hypot(roamDx, roamDy);
               if (e.roamRetarget <= 0 || roamDist < 32) {
-                e.roamTargetX = rand(70, WORLD_W - 70);
-                e.roamTargetY = rand(70, WORLD_H - 70);
-                e.roamRetarget = rand(1.4, 2.8);
+                const roamInset = e.type === "moduleCarrier" ? 85 : 70;
+                e.roamTargetX = rand(roamInset, WORLD_W - roamInset);
+                e.roamTargetY = rand(roamInset, WORLD_H - roamInset);
+                e.roamRetarget =
+                  e.type === "moduleCarrier"
+                    ? rand(1.7, 3.2)
+                    : rand(1.4, 2.8);
               }
               targetX = e.roamTargetX;
               targetY = e.roamTargetY;
@@ -2878,9 +3894,13 @@
             const a = Math.atan2(targetY - e.y, targetX - e.x);
             e.x += Math.cos(a) * e.speed * speedScale * dt;
             e.y += Math.sin(a) * e.speed * speedScale * dt;
-            if (e.type === "researchCarrier") {
-              e.x = clamp(e.x, -45, WORLD_W + 45);
-              e.y = clamp(e.y, -45, WORLD_H + 45);
+            if (
+              e.type === "researchCarrier" ||
+              e.type === "moduleCarrier"
+            ) {
+              const edge = e.type === "moduleCarrier" ? 58 : 45;
+              e.x = clamp(e.x, -edge, WORLD_W + edge);
+              e.y = clamp(e.y, -edge, WORLD_H + edge);
             }
             e.hitFlash = Math.max(0, (e.hitFlash || 0) - dt);
             e.healthBarTimer = Math.max(0, (e.healthBarTimer || 0) - dt);
@@ -2990,6 +4010,7 @@
               specAcquiredFeedback(amount);
             }
           }
+          updateModulePackagePickups(dt);
           for (const q of game.particles) {
             q.x += q.vx * dt;
             q.y += q.vy * dt;
@@ -3030,6 +4051,9 @@
           game.explosions = game.explosions.filter((ex) => ex.life > 0);
           game.carrierBursts = game.carrierBursts.filter((cb) => cb.life > 0);
           game.specAcquireEffects = game.specAcquireEffects.filter(
+            (fx) => fx.life > 0,
+          );
+          game.moduleAcquireEffects = game.moduleAcquireEffects.filter(
             (fx) => fx.life > 0,
           );
           game.spawnWarnings = game.spawnWarnings.filter((w) => w.life > 0);
@@ -3317,12 +4341,14 @@
               0,
               1,
             );
-            transitionAlpha =
-              game.raidTransition.type === "extract"
-                ? game.raidTransition.phase === "beam"
+            if (game.raidTransition.type === "deploy")
+              transitionAlpha = clamp((trp - 0.16) / 0.3, 0, 1);
+            else if (game.raidTransition.type === "extract")
+              transitionAlpha =
+                game.raidTransition.phase === "beam"
                   ? 1 - clamp((trp - 0.58) / 0.24, 0, 1)
-                  : 1
-                : 1 - clamp((trp - 0.2) / 0.18, 0, 1);
+                  : 1;
+            else transitionAlpha = 1 - clamp((trp - 0.2) / 0.18, 0, 1);
           }
           ctx.save();
           ctx.globalAlpha *= transitionAlpha;
@@ -3460,26 +4486,31 @@
           ctx.restore();
         }
         function drawHubObjectLabel(o) {
-          if (game.activeHubObject !== o) return;
+          const visibility = clamp(o.labelVisibility || 0, 0, 1);
+          if (visibility <= 0) return;
           const c = hubObjectCenter(o),
             s = isoProject(c.x, c.y),
             h = o.height || 50,
-            text = o.label || "Hub Object";
+            text = o.label || "HUB OBJECT",
+            fade = 1 - (1 - visibility) ** 3,
+            pop = uiPopEase(visibility),
+            scale = UI_MOTION.hiddenScale + (1 - UI_MOTION.hiddenScale) * pop;
           ctx.save();
+          ctx.globalAlpha = fade;
+          ctx.translate(s.x, s.y - h - 23 + (1 - fade) * UI_MOTION.offsetY);
+          ctx.scale(scale, scale);
           ctx.font = "800 12px Inter,system-ui";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           const padX = 10,
-            w = ctx.measureText(text).width + padX * 2,
-            x = s.x,
-            y = s.y - h - 23;
+            w = ctx.measureText(text).width + padX * 2;
           ctx.fillStyle = "rgba(8,11,15,.86)";
           ctx.strokeStyle = "rgba(255,255,255,.12)";
           ctx.lineWidth = 1;
-          ctx.fillRect(x - w / 2, y - 11, w, 22);
-          ctx.strokeRect(x - w / 2, y - 11, w, 22);
+          ctx.fillRect(-w / 2, -11, w, 22);
+          ctx.strokeRect(-w / 2, -11, w, 22);
           ctx.fillStyle = "#f2f4f7";
-          ctx.fillText(text, x, y);
+          ctx.fillText(text, 0, 0);
           ctx.restore();
         }
         function drawDeploymentTerminal(t) {
@@ -3639,11 +4670,128 @@
           }
           for (const o of HUB.objects) drawHubObjectLabel(o);
         }
+        function drawSectorCompletionNotice() {
+          const completion = game.sectorCompletion;
+          if (!completion) return;
+          const p = clamp(completion.elapsed / completion.duration, 0, 1),
+            appear = uiPopEase(clamp(p / 0.2, 0, 1)),
+            fadeOut = 1 - clamp((p - 0.72) / 0.28, 0, 1),
+            alpha = clamp(appear, 0, 1) * fadeOut,
+            scale =
+              UI_MOTION.hiddenScale + (1 - UI_MOTION.hiddenScale) * appear;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.translate(W * 0.5, H * 0.32 + (1 - appear) * UI_MOTION.offsetY);
+          ctx.scale(scale, scale);
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.font = "900 20px Inter,system-ui";
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = "rgba(0,15,24,.84)";
+          ctx.fillStyle = "#d9f7ff";
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = "#7ad7ff";
+          ctx.strokeText("SECTOR SECURED", 0, 0);
+          ctx.fillText("SECTOR SECURED", 0, 0);
+          ctx.shadowBlur = 0;
+          ctx.font = "800 9px Inter,system-ui";
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = "rgba(0,15,24,.82)";
+          ctx.fillStyle = "#9ce8ff";
+          ctx.strokeText("ALL HOSTILES ELIMINATED", 0, 24);
+          ctx.fillText("ALL HOSTILES ELIMINATED", 0, 24);
+          ctx.restore();
+        }
         function drawRaidTransition() {
           const tr = game.raidTransition;
           if (!tr) return;
           const p = clamp(tr.elapsed / tr.duration, 0, 1),
             s = isoProject(tr.x, tr.y);
+          if (tr.type === "deploy") {
+            const beamIn = clamp(p / 0.18, 0, 1),
+              beamOut = 1 - clamp((p - 0.72) / 0.28, 0, 1),
+              beam = beamIn * beamOut,
+              settle = clamp((p - 0.12) / 0.38, 0, 1),
+              pulse = 0.86 + 0.14 * Math.sin(performance.now() / 48),
+              beamW = 10 + 25 * beam,
+              top = -40,
+              base = s.y + 8;
+            ctx.save();
+            ctx.globalCompositeOperation = "screen";
+            ctx.globalAlpha = (0.18 + 0.38 * beam) * beamOut;
+            ctx.fillStyle = "#7ad7ff";
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = "#7ad7ff";
+            ctx.beginPath();
+            ctx.ellipse(
+              s.x,
+              s.y + 2,
+              (44 - 12 * settle) * pulse,
+              (17 - 4 * settle) * pulse,
+              0,
+              0,
+              Math.PI * 2,
+            );
+            ctx.fill();
+            ctx.globalAlpha = 0.78 * beam;
+            const grad = ctx.createLinearGradient(s.x, top, s.x, base);
+            grad.addColorStop(0, "rgba(122,215,255,0)");
+            grad.addColorStop(0.3, `rgba(122,215,255,${0.2 * beam})`);
+            grad.addColorStop(0.76, `rgba(145,228,255,${0.58 * beam})`);
+            grad.addColorStop(1, `rgba(225,251,255,${0.9 * beam})`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(s.x - beamW / 2, top, beamW, base - top);
+            ctx.globalAlpha = 0.82 * beam;
+            ctx.fillStyle = "#e7fbff";
+            ctx.fillRect(
+              s.x - Math.max(1.5, beamW * 0.12),
+              top,
+              Math.max(3, beamW * 0.24),
+              base - top,
+            );
+            for (let i = 0; i < 9; i++) {
+              const phase = (p * 2.5 + i / 9) % 1,
+                y = top + phase * (base - top),
+                x = s.x + Math.sin(i * 4.1 + p * 11) * beamW * 0.52;
+              ctx.globalAlpha = (0.2 + 0.5 * phase) * beam;
+              ctx.fillStyle = i % 2 ? "#bceeff" : "#7ad7ff";
+              ctx.fillRect(x, y, 1.4, 8 + 8 * phase);
+            }
+            ctx.globalAlpha = 0.85 * beamOut;
+            ctx.strokeStyle = "#9ce8ff";
+            ctx.lineWidth = 2.2;
+            ctx.beginPath();
+            ctx.ellipse(
+              s.x,
+              s.y + 2,
+              42 - 11 * settle,
+              16 - 4 * settle,
+              0,
+              0,
+              Math.PI * 2,
+            );
+            ctx.stroke();
+            ctx.restore();
+            const textIn = clamp((p - 0.42) / 0.12, 0, 1),
+              textOut = 1 - clamp((p - 0.9) / 0.1, 0, 1),
+              textA = textIn * textOut;
+            ctx.save();
+            ctx.globalAlpha = textA;
+            ctx.translate(s.x, s.y - 62 - (1 - textIn) * 8);
+            ctx.scale(0.92 + 0.08 * textIn, 0.92 + 0.08 * textIn);
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "900 15px Inter,system-ui";
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = "rgba(0,15,24,.82)";
+            ctx.fillStyle = "#c9f3ff";
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = "#7ad7ff";
+            ctx.strokeText("ANDROID DEPLOYED", 0, 0);
+            ctx.fillText("ANDROID DEPLOYED", 0, 0);
+            ctx.restore();
+            return;
+          }
           if (tr.type === "extract") {
             if (tr.phase === "recovery") {
               const pulse = 0.88 + 0.12 * Math.sin(performance.now() / 55),
@@ -3917,6 +5065,49 @@
             ctx.fillText("SPEC", s.x, labelY);
             ctx.restore();
           }
+          function drawModulePackage(modulePackage) {
+            const s = isoProject(modulePackage.x, modulePackage.y),
+              pulse = 0.5 + 0.5 * Math.sin(modulePackage.bob * 1.6),
+              size = (modulePackage.r || 11) * (1 + pulse * 0.08),
+              y = s.y - 7;
+            drawShadow(s.x, s.y + 3, size * 1.45, size * 0.52, 0.25);
+            ctx.save();
+            ctx.globalAlpha = 0.12 + pulse * 0.13;
+            ctx.fillStyle = "#97ff4d";
+            ctx.beginPath();
+            ctx.arc(s.x, y, size * (1.8 + pulse * 0.25), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+            ctx.save();
+            ctx.translate(s.x, y);
+            ctx.shadowBlur = 16 + pulse * 10;
+            ctx.shadowColor = "#97ff4d";
+            ctx.fillStyle = "#172414";
+            ctx.strokeStyle = "#b9ff66";
+            ctx.lineWidth = 2;
+            ctx.fillRect(-size, -size * 0.62, size * 2, size * 1.24);
+            ctx.strokeRect(-size, -size * 0.62, size * 2, size * 1.24);
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = "#97ff4d";
+            ctx.fillRect(-size * 0.48, -size * 0.22, size * 0.96, size * 0.44);
+            ctx.fillStyle = "#0b1209";
+            ctx.font = `900 ${Math.max(7, size * 0.62)}px Inter,system-ui`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("M", 0, 0);
+            ctx.restore();
+            ctx.save();
+            ctx.textAlign = "center";
+            ctx.textBaseline = "bottom";
+            ctx.font = "900 8px Inter,system-ui";
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = "rgba(0,0,0,.85)";
+            ctx.fillStyle = "#c9ff8c";
+            const labelY = y - size - 9;
+            ctx.strokeText("MODULE", s.x, labelY);
+            ctx.fillText("MODULE", s.x, labelY);
+            ctx.restore();
+          }
           function drawEnemy(e) {
             const s = isoProject(e.x, e.y),
               hopLift = e.type === "rookie" ? e.hopLift || 0 : 0,
@@ -3928,7 +5119,63 @@
               e.r * 0.42 * (1 - hopLift / 48),
               0.24,
             );
-            if (e.type === "researchCarrier") {
+            if (e.type === "moduleCarrier") {
+              const flash = (e.hitFlash || 0) > 0,
+                pulse = 0.5 + 0.5 * Math.sin(performance.now() / 130),
+                sz = e.r * 0.78,
+                topY = bodyY - sz * 0.22;
+              ctx.save();
+              ctx.globalAlpha = 0.12 + pulse * 0.1;
+              ctx.fillStyle = "#97ff4d";
+              ctx.beginPath();
+              ctx.ellipse(
+                s.x,
+                s.y,
+                e.r * (1.75 + pulse * 0.12),
+                e.r * (0.78 + pulse * 0.08),
+                0,
+                0,
+                Math.PI * 2,
+              );
+              ctx.fill();
+              ctx.restore();
+              ctx.save();
+              ctx.translate(s.x, topY);
+              ctx.shadowBlur = 22 + pulse * 12;
+              ctx.shadowColor = "#97ff4d";
+              ctx.fillStyle = flash ? "#fff" : "#172414";
+              ctx.strokeStyle = flash ? "#fff" : "#b9ff66";
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(0, -sz);
+              ctx.lineTo(sz, -sz * 0.42);
+              ctx.lineTo(sz * 0.86, sz * 0.58);
+              ctx.lineTo(0, sz);
+              ctx.lineTo(-sz * 0.86, sz * 0.58);
+              ctx.lineTo(-sz, -sz * 0.42);
+              ctx.closePath();
+              ctx.fill();
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+              ctx.fillStyle = flash ? "#fff" : "#97ff4d";
+              ctx.fillRect(-sz * 0.54, -sz * 0.18, sz * 1.08, sz * 0.36);
+              ctx.fillStyle = "#0b1209";
+              ctx.font = `900 ${Math.max(11, sz * 0.55)}px Inter,system-ui`;
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillText("M", 0, 0);
+              ctx.restore();
+              ctx.save();
+              ctx.textAlign = "center";
+              ctx.textBaseline = "bottom";
+              ctx.font = "900 9px Inter,system-ui";
+              ctx.lineWidth = 3;
+              ctx.strokeStyle = "rgba(0,0,0,.88)";
+              ctx.fillStyle = "#c9ff8c";
+              ctx.strokeText("MODULE CARRIER", s.x, topY - sz - 8);
+              ctx.fillText("MODULE CARRIER", s.x, topY - sz - 8);
+              ctx.restore();
+            } else if (e.type === "researchCarrier") {
               const flash = (e.hitFlash || 0) > 0,
                 sz = e.r * 0.82,
                 topY = bodyY - sz * 0.35;
@@ -3990,6 +5237,8 @@
                 w =
                   e.type === "brute"
                     ? 24
+                    : e.type === "moduleCarrier"
+                      ? 38
                     : e.type === "researchCarrier"
                       ? 22
                       : 19,
@@ -4048,6 +5297,12 @@
             actors.push({ type: "health", key: h.x + h.y, ref: h });
           for (const r of game.specDrops)
             actors.push({ type: "spec", key: r.x + r.y, ref: r });
+          for (const modulePackage of game.modulePackages)
+            actors.push({
+              type: "modulePackage",
+              key: modulePackage.x + modulePackage.y,
+              ref: modulePackage,
+            });
           for (const e of game.enemies)
             actors.push({ type: "enemy", key: e.x + e.y, ref: e });
           actors.push({
@@ -4064,6 +5319,7 @@
               );
             else if (a.type === "health") drawPickup(a.ref, "#ff5f72");
             else if (a.type === "spec") drawSpecPickup(a.ref);
+            else if (a.type === "modulePackage") drawModulePackage(a.ref);
             else if (a.type === "enemy") drawEnemy(a.ref);
             else drawPlayer();
           }
@@ -4094,17 +5350,18 @@
               ry = worldR * ISO_Y * Math.SQRT2;
             ctx.save();
             ctx.globalAlpha = (1 - progress) * 0.65;
-            ctx.fillStyle = "rgba(255,209,102,.13)";
-            ctx.strokeStyle = "#ffd166";
+            ctx.fillStyle = cb.fill || "rgba(255,209,102,.13)";
+            ctx.strokeStyle = cb.color || "#ffd166";
             ctx.lineWidth = 4 - 2 * progress;
             ctx.shadowBlur = 18 * (1 - progress);
-            ctx.shadowColor = "#ffd166";
+            ctx.shadowColor = cb.color || "#ffd166";
             ctx.beginPath();
             ctx.ellipse(s.x, s.y, rx, ry, 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
             ctx.globalAlpha = (1 - progress) * 0.45;
-            ctx.strokeStyle = "#fff0b0";
+            ctx.strokeStyle =
+              cb.color === "#97ff4d" ? "#e5ffc4" : "#fff0b0";
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.ellipse(s.x, s.y, rx * 0.72, ry * 0.72, 0, 0, Math.PI * 2);
@@ -4186,6 +5443,28 @@
             ctx.fillText(fx.text, 0, 0);
             ctx.restore();
           }
+          for (const fx of game.moduleAcquireEffects) {
+            const t = clamp(fx.life / fx.maxLife, 0, 1),
+              progress = 1 - t,
+              appear = clamp(progress / 0.16, 0, 1),
+              fade = clamp(t / 0.22, 0, 1),
+              scale = 0.9 + appear * 0.12;
+            ctx.save();
+            ctx.translate(W * 0.5, H * 0.15);
+            ctx.scale(scale, scale);
+            ctx.globalAlpha = appear * fade;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "900 16px Inter,system-ui";
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = "rgba(0,0,0,.86)";
+            ctx.fillStyle = "#c9ff8c";
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = "#97ff4d";
+            ctx.strokeText(fx.text, 0, 0);
+            ctx.fillText(fx.text, 0, 0);
+            ctx.restore();
+          }
           ctx.globalAlpha = 1;
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
@@ -4220,20 +5499,24 @@
             ctx.translate(s.x, s.y);
             ctx.scale(pulse, pulse);
             ctx.globalAlpha = alpha;
+            const warningSize = w.size || 11;
             ctx.fillStyle =
               w.color === "#ffd166"
                 ? "rgba(255,209,102,.18)"
-                : "rgba(255,95,114,.18)";
+                : w.color === "#97ff4d"
+                  ? "rgba(151,255,77,.2)"
+                  : "rgba(255,95,114,.18)";
             ctx.beginPath();
-            ctx.arc(0, 0, 11, 0, Math.PI * 2);
+            ctx.arc(0, 0, warningSize, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = w.color || "#ff6b7d";
-            ctx.lineWidth = 2.6;
+            ctx.lineWidth = w.color === "#97ff4d" ? 3.5 : 2.6;
             ctx.beginPath();
-            ctx.arc(0, 0, 6.5, 0, Math.PI * 2);
+            ctx.arc(0, 0, warningSize * 0.6, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
           }
+          drawSectorCompletionNotice();
           drawRaidTransition();
           ctx.restore();
           if (game.flash > 0) {
@@ -4304,6 +5587,12 @@
                 el.selfDestructConfirmOverlay.style.display = "none";
               else togglePause();
             }
+            if (
+              e.code === "Escape" &&
+              game?.scene === "hub" &&
+              game.hubConfigOpen
+            )
+              closeAndroidConfiguration();
             if (
               (e.code === "Enter" || e.code === "Space") &&
               game?.scene === "menu"
@@ -4401,6 +5690,10 @@
           if (el.testUpgradesOverlay)
             el.testUpgradesOverlay.style.display = "none";
         };
+        el.closeAndroidConfigBtn.onclick = closeAndroidConfiguration;
+        el.deployConfiguredAndroidBtn.onclick = deployArena;
+        el.grantAllTestModulesBtn.onclick = grantAllHubTestModules;
+        el.clearTestModulesBtn.onclick = clearHubTestModules;
         el.selfDestructBtn.onclick = () => {
           if (
             game?.scene === "arena" &&
@@ -4414,7 +5707,7 @@
             el.selfDestructConfirmOverlay.style.display = "none";
         };
         el.confirmSelfDestructBtn.onclick = selfDestructRaid;
-        el.restartBtn.onclick = enterHub;
+        el.restartBtn.onclick = returnToHubFromGameOver;
         el.continueRaidBtn.onclick = continueRaid;
         el.extractBtn.onclick = extractRaid;
         resetAll();
