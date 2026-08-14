@@ -6,7 +6,7 @@
       name="viewport"
       content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
     />
-    <title>Micro Survivors Prototype v50.2 Module Carrier</title>
+    <title>Micro Survivors Prototype v50.9 Flexible Arena + Camera</title>
     <style>
       :root {
         --bg: #07090c;
@@ -79,6 +79,34 @@
         align-items: center;
         padding: 8px;
       }
+      .combatTopHud {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 5px;
+        padding: 8px;
+      }
+      .topStatsRow {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .topHealthBar {
+        min-width: 0;
+        padding: 6px 8px;
+        border: 1px solid rgba(255, 95, 114, 0.3);
+        border-radius: 9px;
+        background: var(--panel);
+        backdrop-filter: blur(8px);
+      }
+      .topHealthBar .barlabel {
+        margin-bottom: 3px;
+        color: rgba(242, 244, 247, 0.78);
+      }
       .pill {
         background: var(--panel);
         border: 1px solid var(--line);
@@ -105,14 +133,16 @@
       }
       .bottomControls {
         position: absolute;
-        left: 0;
+        left: auto;
         right: 0;
         bottom: 0;
+        width: 48px;
         height: 58px;
         display: grid;
-        grid-template-columns: 1fr 1fr 48px;
-        background: rgba(8, 11, 15, 0.94);
+        grid-template-columns: 48px;
+        background: rgba(8, 11, 15, 0.82);
         border-top: 1px solid var(--line);
+        border-left: 1px solid var(--line);
         pointer-events: auto;
       }
       #dynamicJoystick {
@@ -204,15 +234,14 @@
       #hpFill {
         background: var(--danger);
       }
-      #xpFill {
-        background: var(--xp);
+      #xpProgressBar {
+        display: none;
       }
       #pauseBtn {
         width: 48px;
         height: 58px;
         padding: 0;
         border-radius: 0;
-        border-left: 1px solid var(--line);
         background: rgba(255, 255, 255, 0.035);
         color: var(--text);
         font-size: 18px;
@@ -398,7 +427,9 @@
       #selfDestructConfirmOverlay,
       #raidUpgradesOverlay,
       #testUpgradesOverlay,
-      #androidConfigOverlay {
+      #androidConfigOverlay,
+      #raidCargoOverlay,
+      #moduleDecisionOverlay {
         position: absolute;
         inset: 0;
         display: none;
@@ -441,8 +472,12 @@
       }
       #raidUpgradesOverlay,
       #testUpgradesOverlay,
-      #androidConfigOverlay {
+      #androidConfigOverlay,
+      #raidCargoOverlay {
         z-index: 28;
+      }
+      #moduleDecisionOverlay {
+        z-index: 32;
       }
       .startBox,
       .pauseBox,
@@ -495,6 +530,21 @@
         width: auto;
         padding: 8px 10px;
         font-size: 9px;
+      }
+      .testModuleActions {
+        display: flex;
+        gap: 5px;
+        flex: 0 0 auto;
+      }
+      .testModuleActions button {
+        min-width: 58px;
+        padding: 7px 8px;
+        border-radius: 4px;
+        font-size: 8px;
+      }
+      .testModuleActions button:disabled {
+        cursor: default;
+        opacity: 0.34;
       }
       .debugTag {
         color: #ffd166 !important;
@@ -579,6 +629,21 @@
         margin-top: 3px;
         color: #9ce8ff;
         font-size: 17px;
+      }
+      .capacityPurchaseBtn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 7px 6px;
+        border-radius: 4px;
+        border: 1px solid rgba(255, 209, 102, 0.26);
+        background: rgba(255, 209, 102, 0.09);
+        color: #ffe29a;
+        font-size: 8px;
+        letter-spacing: 0.04em;
+      }
+      .capacityPurchaseBtn:disabled {
+        cursor: default;
+        opacity: 0.42;
       }
       .configSection {
         margin-top: 12px;
@@ -671,6 +736,106 @@
         border-radius: 4px;
         padding: 8px;
         font-size: 8px;
+      }
+      .moduleDecisionBox {
+        width: 92%;
+        text-align: center;
+        background: #0d1510;
+        border: 1px solid rgba(151, 255, 77, 0.48);
+        border-left: 3px solid #97ff4d;
+        border-radius: 8px;
+        padding: 20px 16px 16px;
+        box-shadow:
+          0 26px 80px rgba(0, 0, 0, 0.68),
+          0 0 34px rgba(151, 255, 77, 0.09);
+        animation: moduleDecisionIn 125ms cubic-bezier(0.2, 0.9, 0.25, 1.12)
+          both;
+      }
+      @keyframes moduleDecisionIn {
+        from {
+          opacity: 0;
+          transform: translateY(5px) scale(0.965);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .moduleDecisionTag {
+        color: #97ff4d;
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.16em;
+      }
+      .moduleDecisionBox h1 {
+        margin: 9px 0 5px;
+        color: #eaffd6;
+        font-size: 27px;
+      }
+      .moduleDecisionBox > p {
+        margin: 0 auto;
+        max-width: 390px;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+      .moduleDecisionStats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 7px;
+        margin: 14px 0;
+      }
+      .moduleDecisionStat {
+        padding: 9px;
+        background: rgba(151, 255, 77, 0.055);
+        border: 1px solid rgba(151, 255, 77, 0.14);
+        color: var(--muted);
+        font-size: 8px;
+        letter-spacing: 0.07em;
+      }
+      .moduleDecisionStat strong {
+        display: block;
+        margin-top: 3px;
+        color: #c9ff8c;
+        font-size: 14px;
+      }
+      .moduleDecisionActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+      .moduleDecisionActions button {
+        border-radius: 5px;
+      }
+      .moduleDecisionActions button:disabled {
+        cursor: default;
+        opacity: 0.34;
+      }
+      #storeModuleBtn {
+        background: #1a3035;
+        color: #d9f6ff;
+        border: 1px solid rgba(122, 215, 255, 0.32);
+      }
+      #discardModuleBtn {
+        grid-column: 1 / -1;
+        margin-top: 3px;
+        background: transparent;
+        color: #ff9aa5;
+        border: 1px solid rgba(255, 95, 114, 0.24);
+        font-size: 9px;
+      }
+      .moduleActionReason {
+        display: block;
+        margin-top: 3px;
+        font-size: 8px;
+        font-weight: 600;
+        opacity: 0.76;
+      }
+      .moduleDecisionNote {
+        margin-top: 10px;
+        color: #77856f;
+        font-size: 8px;
+        line-height: 1.35;
       }
       .startBox h1,
       .pauseBox h1,
@@ -862,7 +1027,8 @@
         .barbox {
           padding: 6px;
         }
-        .topbar {
+        .topbar,
+        .combatTopHud {
           padding: 5px;
         }
         .pill {
@@ -876,20 +1042,30 @@
     <div id="gameShell">
       <canvas id="game"></canvas>
       <div id="hud">
-        <div id="combatTop" class="topbar">
-          <div class="pill">TIME <b id="time">00:00</b></div>
-          <div class="pill">LV <b id="level">1</b></div>
-          <div class="pill">KILLS <b id="kills">0</b></div>
-          <div class="pill specPill" id="raidSpecPill">
-            SPEC <b id="raidSpec">0</b>
+        <div id="combatTop" class="combatTopHud">
+          <div id="healthProgressBar" class="topHealthBar">
+            <div class="barlabel">
+              <span>ANDROID HEALTH</span><span id="hpText">100 / 100</span>
+            </div>
+            <div class="bar"><div id="hpFill" class="fill"></div></div>
           </div>
-          <div class="pill modulePill">
-            MC <b id="moduleCarrierProgress">0/20</b>
+          <div class="topStatsRow">
+            <div class="pill">TIME <b id="time">00:00</b></div>
+            <div class="pill modulePill">
+              INST <b id="installedCapacityHud">0/15</b>
+            </div>
+            <div class="pill">KILLS <b id="kills">0</b></div>
+            <div class="pill specPill" id="raidSpecPill">
+              SPEC <b id="raidSpec">0</b>
+            </div>
+            <div class="pill modulePill">
+              MC <b id="moduleCarrierProgress">0/20</b>
+            </div>
+            <div class="pill modulePill">
+              CARGO <b id="modulePackageCount">0/5</b>
+            </div>
+            <div class="pill">DMG <b id="damage">12</b></div>
           </div>
-          <div class="pill modulePill">
-            PKG <b id="modulePackageCount">0</b>
-          </div>
-          <div class="pill">DMG <b id="damage">12</b></div>
         </div>
         <div id="hubTop" class="topbar">
           <div class="pill specPill">SPEC <b id="hubSpec">0</b></div>
@@ -907,13 +1083,7 @@
         </div>
         <button id="interactBtn">DEPLOY ANDROID</button>
         <div id="combatBottom" class="bottomControls">
-          <div class="barbox">
-            <div class="barlabel">
-              <span>HEALTH</span><span id="hpText">100 / 100</span>
-            </div>
-            <div class="bar"><div id="hpFill" class="fill"></div></div>
-          </div>
-          <div class="barbox">
+          <div id="xpProgressBar" class="barbox" aria-hidden="true">
             <div class="barlabel">
               <span>XP</span><span id="xpText">0 / 5</span>
             </div>
@@ -927,8 +1097,8 @@
         <div class="startBox">
           <h1>MICRO SURVIVORS</h1>
           <p>
-            Deploy androids, recover Research Specs, and bring them safely back
-            to the hub.
+            Deploy Androids, recover modules and Research Specs, then extract
+            them safely back to the Hub.
           </p>
           <div id="saveSummary" class="saveSummary">
             SAFE STORAGE &nbsp;•&nbsp; SPEC <b id="menuSpec">0</b>
@@ -941,7 +1111,7 @@
             </button>
           </div>
           <div id="menuStatus" class="menuStatus"></div>
-          <div class="buildLabel">PROTOTYPE v50.2</div>
+          <div class="buildLabel">PROTOTYPE v50.9</div>
         </div>
       </div>
       <div id="resetConfirmOverlay">
@@ -965,9 +1135,11 @@
           <div class="menuActions">
             <button id="resumeBtn">RESUME</button
             ><button id="raidUpgradesBtn" class="secondaryBtn">
-              UPGRADES ACQUIRED <span id="raidUpgradeCount">0</span></button
+              INSTALLED MODULES <span id="raidUpgradeCount">0</span></button
+            ><button id="raidCargoBtn" class="secondaryBtn">
+              RAID CARGO <span id="raidCargoButtonCount">0/5</span></button
             ><button id="testUpgradesBtn" class="secondaryBtn">
-              TEST UPGRADES</button
+              TEST MODULES</button
             ><button id="selfDestructBtn" class="dangerBtn">
               SELF DESTRUCT
             </button>
@@ -978,20 +1150,35 @@
         <div class="raidUpgradeBox">
           <div class="raidUpgradeHeader">
             <div>
-              <h2>UPGRADES ACQUIRED</h2>
-              <span>ANDROID / CURRENT RAID</span>
+              <h2>INSTALLED MODULES</h2>
+              <span>ACTIVE ANDROID BUILD / AT RISK</span>
             </div>
           </div>
           <div id="raidUpgradeList" class="upgradeList"></div>
           <button id="closeRaidUpgradesBtn" class="closeTechBtn">BACK</button>
         </div>
       </div>
+      <div id="raidCargoOverlay">
+        <div class="raidUpgradeBox">
+          <div class="raidUpgradeHeader">
+            <div>
+              <h2>RAID CARGO</h2>
+              <span>UNEXTRACTED MODULE PACKAGES / CURRENT ANDROID</span>
+            </div>
+          </div>
+          <div id="raidCargoList" class="upgradeList"></div>
+          <div class="upgradeDetail debugTag">
+            EXTRACT TO TRANSFER CARGO INTO SAFE HUB STORAGE
+          </div>
+          <button id="closeRaidCargoBtn" class="closeTechBtn">BACK</button>
+        </div>
+      </div>
       <div id="testUpgradesOverlay">
         <div class="raidUpgradeBox">
           <div class="raidUpgradeHeader">
             <div>
-              <h2>TEST UPGRADES</h2>
-              <span class="debugTag">DEVELOPMENT TOOL / CURRENT ANDROID</span>
+              <h2>TEST MODULES</h2>
+              <span class="debugTag">USE / STORE RULE TESTING</span>
             </div>
           </div>
           <div id="testUpgradeList" class="upgradeList"></div>
@@ -1010,14 +1197,20 @@
             <div class="configCapacity">
               <span>INSTALLED CAPACITY</span>
               <strong id="installedCapacityText">0 / 15</strong>
+              <button id="buyInstalledCapacityBtn" class="capacityPurchaseBtn">
+                UPGRADE +1
+              </button>
             </div>
             <div class="configCapacity">
               <span>RAID CARGO CAPACITY</span>
               <strong id="cargoCapacityText">5</strong>
+              <button id="buyCargoCapacityBtn" class="capacityPurchaseBtn">
+                UPGRADE +1
+              </button>
             </div>
           </div>
           <div class="upgradeDetail debugTag">
-            v50.2 CHECKPOINT: ANDROID MODULE LOSS RULES ARE NOT ACTIVE YET
+            DEPLOYED MODULES ARE LOST IF THIS ANDROID IS DESTROYED
           </div>
           <div class="configSection">
             <div class="configSectionTitle">
@@ -1039,6 +1232,8 @@
             <div class="debugModuleTools">
               <button id="grantAllTestModulesBtn" class="secondaryBtn">
                 +1 OF EVERY MODULE</button
+              ><button id="grantTestSpecBtn" class="secondaryBtn">
+                +10 TEST SPEC</button
               ><button id="clearTestModulesBtn" class="dangerBtn">
                 CLEAR HUB STORAGE
               </button>
@@ -1064,8 +1259,9 @@
         <div class="resetBox">
           <h1>SELF DESTRUCT?</h1>
           <p>
-            Abandon this raid and destroy the Android. All carried Research
-            Specs and temporary raid progress will be lost.
+            Abandon this raid and destroy the Android. All installed modules,
+            Raid cargo, carried Research Specs and temporary progress will be
+            lost. Safe Hub storage will survive.
           </p>
           <div class="menuActions">
             <button id="confirmSelfDestructBtn" class="dangerBtn">
@@ -1083,14 +1279,47 @@
           <div id="cards" class="cards"></div>
         </div>
       </div>
+      <div id="moduleDecisionOverlay">
+        <div class="moduleDecisionBox">
+          <div class="moduleDecisionTag">MODULE PACKAGE RECOVERED</div>
+          <h1 id="recoveredModuleName">UNKNOWN MODULE</h1>
+          <p id="recoveredModuleDescription"></p>
+          <div class="moduleDecisionStats">
+            <div class="moduleDecisionStat">
+              INSTALLED LEVEL
+              <strong id="decisionModuleLevel">LV 0 / 3</strong>
+            </div>
+            <div class="moduleDecisionStat">
+              INSTALLED CAPACITY
+              <strong id="decisionInstalledCapacity">0 / 15</strong>
+            </div>
+            <div class="moduleDecisionStat">
+              RAID CARGO
+              <strong id="decisionCargoCapacity">0 / 5</strong>
+            </div>
+          </div>
+          <div class="moduleDecisionActions">
+            <button id="useModuleBtn">USE UPGRADE [1]</button>
+            <button id="storeModuleBtn">STORE UPGRADE [2]</button>
+            <button id="discardModuleBtn">DISCARD PACKAGE [3]</button>
+          </div>
+          <div class="moduleDecisionNote">
+            USED MODULES RETURN INSTALLED; STORED MODULES BECOME SAFE AFTER
+            EXTRACTION. KEYBOARD: 1 USE • 2 STORE • 3 DISCARD.
+          </div>
+        </div>
+      </div>
       <div id="gameOver">
         <div class="gameoverBox">
           <h1>ANDROID LOST</h1>
-          <p>The raid has ended. Carried Research Specs were lost.</p>
+          <p>
+            The Android and its installed modules, Raid cargo and carried
+            Research Specs were destroyed. Safe Hub storage survived.
+          </p>
           <div class="stats">
             <span>Time <b id="finalTime">00:00</b></span
             ><span>Kills <b id="finalKills">0</b></span
-            ><span>Level <b id="finalLevel">1</b></span
+            ><span>Installed <b id="finalLevel">0/15</b></span
             ><span>Specs Lost <b id="lostSpec">0</b></span>
           </div>
           <button id="restartBtn">Return to Hub</button>
@@ -1115,8 +1344,8 @@
     </div>
     <script>
       // =====================================================================
-      // MICRO SURVIVORS v50.2
-      // Large Module Carriers, physical packages, and density testing.
+      // MICRO SURVIVORS v50.9
+      // Module package Use / Store decisions and Raid cargo limits.
       // =====================================================================
 
       // ---------------------------------------------------------------------
@@ -1129,7 +1358,6 @@
           shell = document.getElementById("gameShell");
         const el = {
           time: document.getElementById("time"),
-          level: document.getElementById("level"),
           kills: document.getElementById("kills"),
           raidSpec: document.getElementById("raidSpec"),
           raidSpecPill: document.getElementById("raidSpecPill"),
@@ -1137,6 +1365,9 @@
             "moduleCarrierProgress",
           ),
           modulePackageCount: document.getElementById("modulePackageCount"),
+          installedCapacityHud: document.getElementById(
+            "installedCapacityHud",
+          ),
           hubSpec: document.getElementById("hubSpec"),
           sectorSpec: document.getElementById("sectorSpec"),
           lostSpec: document.getElementById("lostSpec"),
@@ -1170,10 +1401,34 @@
           raidUpgradesOverlay: document.getElementById("raidUpgradesOverlay"),
           raidUpgradeList: document.getElementById("raidUpgradeList"),
           closeRaidUpgradesBtn: document.getElementById("closeRaidUpgradesBtn"),
+          raidCargoBtn: document.getElementById("raidCargoBtn"),
+          raidCargoButtonCount: document.getElementById(
+            "raidCargoButtonCount",
+          ),
+          raidCargoOverlay: document.getElementById("raidCargoOverlay"),
+          raidCargoList: document.getElementById("raidCargoList"),
+          closeRaidCargoBtn: document.getElementById("closeRaidCargoBtn"),
           testUpgradesBtn: document.getElementById("testUpgradesBtn"),
           testUpgradesOverlay: document.getElementById("testUpgradesOverlay"),
           testUpgradeList: document.getElementById("testUpgradeList"),
           closeTestUpgradesBtn: document.getElementById("closeTestUpgradesBtn"),
+          moduleDecisionOverlay: document.getElementById(
+            "moduleDecisionOverlay",
+          ),
+          recoveredModuleName: document.getElementById("recoveredModuleName"),
+          recoveredModuleDescription: document.getElementById(
+            "recoveredModuleDescription",
+          ),
+          decisionModuleLevel: document.getElementById("decisionModuleLevel"),
+          decisionInstalledCapacity: document.getElementById(
+            "decisionInstalledCapacity",
+          ),
+          decisionCargoCapacity: document.getElementById(
+            "decisionCargoCapacity",
+          ),
+          useModuleBtn: document.getElementById("useModuleBtn"),
+          storeModuleBtn: document.getElementById("storeModuleBtn"),
+          discardModuleBtn: document.getElementById("discardModuleBtn"),
           androidConfigOverlay: document.getElementById(
             "androidConfigOverlay",
           ),
@@ -1181,6 +1436,12 @@
             "installedCapacityText",
           ),
           cargoCapacityText: document.getElementById("cargoCapacityText"),
+          buyInstalledCapacityBtn: document.getElementById(
+            "buyInstalledCapacityBtn",
+          ),
+          buyCargoCapacityBtn: document.getElementById(
+            "buyCargoCapacityBtn",
+          ),
           installedModuleList: document.getElementById(
             "installedModuleList",
           ),
@@ -1189,6 +1450,7 @@
           grantAllTestModulesBtn: document.getElementById(
             "grantAllTestModulesBtn",
           ),
+          grantTestSpecBtn: document.getElementById("grantTestSpecBtn"),
           clearTestModulesBtn: document.getElementById(
             "clearTestModulesBtn",
           ),
@@ -1230,9 +1492,52 @@
           dialogueHint: document.getElementById("dialogueHint"),
         };
         const GRID_STEP = 80,
-          GRID_COLS = 9,
-          GRID_ROWS = 14,
-          SECTOR_ONE_END = 210;
+          XP_PROGRESSION_ENABLED = false;
+        function createMapConfig(id, gridColumns, gridRows) {
+          return Object.freeze({
+            id,
+            gridColumns,
+            gridRows,
+            width: gridColumns * GRID_STEP,
+            height: gridRows * GRID_STEP,
+          });
+        }
+        const MAP_CONFIGS = Object.freeze({
+          hub: createMapConfig("hub", 9, 14),
+          arena: createMapConfig("arena", 11, 17),
+        });
+        const CAMERA_RULES = Object.freeze({
+          followMode: "locked",
+        });
+        const ENCOUNTER_ENTRY_RULES = Object.freeze({
+          normal: Object.freeze({
+            minDistance: 470,
+            maxDistance: 620,
+            worldMargin: 240,
+            attempts: 28,
+          }),
+          researchCarrier: Object.freeze({
+            minDistance: 430,
+            maxDistance: 560,
+            worldMargin: 240,
+            attempts: 28,
+          }),
+          moduleCarrier: Object.freeze({
+            minDistance: 390,
+            maxDistance: 510,
+            worldMargin: 240,
+            attempts: 32,
+          }),
+        });
+        const ENCOUNTER_WORLD_MARGIN = Math.max(
+          ...Object.values(ENCOUNTER_ENTRY_RULES).map(
+            (rule) => rule.worldMargin,
+          ),
+        );
+        const SECTOR_END_TIMES = Object.freeze({
+          1: 210,
+          2: 330,
+        });
         const UI_MOTION = Object.freeze({
           duration: 0.18,
           hiddenScale: 0.94,
@@ -1245,9 +1550,15 @@
         });
         const MODULE_CARRIER_RULES = Object.freeze({
           perSector: 20,
-          firstSpawnTime: 7,
-          spawnInterval: 10.4,
-          radius: 24,
+          firstSpawnTime: 5.5,
+          spawnInterval: 10.35,
+          radius: 20,
+          telegraphTime: 0.72,
+          baseHp: 30,
+          hpPerSecond: 0.12,
+          roamRadius: 330,
+          anchorLeash: 360,
+          anchorCatchup: 0.45,
         });
         function uiPopEase(value) {
           const t = Math.max(0, Math.min(1, value));
@@ -1282,12 +1593,28 @@
           baseInstalledCapacity: 15,
           baseCargoCapacity: 5,
         });
+        const CAPACITY_PURCHASE_RULES = Object.freeze({
+          installed: Object.freeze({
+            field: "installedCapacity",
+            label: "INSTALLED CAPACITY",
+            base: MODULE_RULES.baseInstalledCapacity,
+            max: 24,
+            baseCost: 6,
+            costStep: 4,
+          }),
+          cargo: Object.freeze({
+            field: "cargoCapacity",
+            label: "RAID CARGO CAPACITY",
+            base: MODULE_RULES.baseCargoCapacity,
+            max: 10,
+            baseCost: 5,
+            costStep: 3,
+          }),
+        });
         const keys = new Set(),
           W = 540,
           H = 960,
-          HUD_SAFE = 66,
-          WORLD_W = GRID_COLS * GRID_STEP,
-          WORLD_H = GRID_ROWS * GRID_STEP;
+          HUD_SAFE = 66;
         function storageAvailable() {
           try {
             const k = "__ms_save_test__";
@@ -1339,13 +1666,19 @@
           };
         }
         function sanitizeAndroidBay(source) {
-          const installedCapacity = Math.max(
-              MODULE_RULES.baseInstalledCapacity,
-              Math.floor(Number(source?.installedCapacity) || 0),
+          const installedCapacity = Math.min(
+              CAPACITY_PURCHASE_RULES.installed.max,
+              Math.max(
+                MODULE_RULES.baseInstalledCapacity,
+                Math.floor(Number(source?.installedCapacity) || 0),
+              ),
             ),
-            cargoCapacity = Math.max(
-              MODULE_RULES.baseCargoCapacity,
-              Math.floor(Number(source?.cargoCapacity) || 0),
+            cargoCapacity = Math.min(
+              CAPACITY_PURCHASE_RULES.cargo.max,
+              Math.max(
+                MODULE_RULES.baseCargoCapacity,
+                Math.floor(Number(source?.cargoCapacity) || 0),
+              ),
             ),
             rawAndroid = source?.android;
           return {
@@ -1730,6 +2063,33 @@
           playTone(920, 1380, 0.15, 0.026, "triangle", 0.14);
           playTone(1450, 2100, 0.1, 0.013, "sine", 0.22);
         }
+        function playModuleRevealSfx() {
+          ensureAudio();
+          playTone(410, 760, 0.09, 0.026, "triangle");
+          playTone(790, 1320, 0.11, 0.018, "sine", 0.045);
+          playNoiseBurst(0.045, 0.006, "highpass", 1800, 1.2, 0.015);
+        }
+        function playModuleUseSfx() {
+          ensureAudio();
+          playTone(330, 660, 0.1, 0.028, "square");
+          playTone(680, 1080, 0.12, 0.018, "triangle", 0.045);
+        }
+        function playModuleStoreSfx() {
+          ensureAudio();
+          playTone(820, 520, 0.09, 0.022, "triangle");
+          playTone(520, 390, 0.1, 0.014, "sine", 0.04);
+        }
+        function playModuleDiscardSfx() {
+          ensureAudio();
+          playTone(260, 120, 0.09, 0.014, "square");
+          playNoiseBurst(0.045, 0.006, "highpass", 1200, 0.8, 0.008);
+        }
+        function playCapacityUpgradeSfx() {
+          ensureAudio();
+          playTone(420, 690, 0.11, 0.03, "triangle");
+          playTone(690, 1040, 0.13, 0.024, "sine", 0.065);
+          playTone(1040, 1480, 0.12, 0.016, "triangle", 0.14);
+        }
         function playCarrierBurstSfx() {
           ensureAudio();
           playTone(125, 48, 0.24, 0.065, "sawtooth");
@@ -1866,7 +2226,7 @@
                 id: "ftue_deployment_terminal",
                 once: true,
                 speaker: "OPERATOR",
-                text: "Approach the Deployment Terminal. We need an Android in the field.",
+                text: "Approach the Deployment Terminal. Configure an Android, then send it into the field.",
               });
           }
           const active = state.active;
@@ -1922,11 +2282,34 @@
         // ---------------------------------------------------------------------
         // WORLD / ISOMETRIC HELPERS
         // ---------------------------------------------------------------------
+        function mapConfigForScene(scene = game?.scene) {
+          return scene === "arena" ? MAP_CONFIGS.arena : MAP_CONFIGS.hub;
+        }
+        function worldBoundsForScene(scene = game?.scene) {
+          return mapConfigForScene(scene);
+        }
+        function createFollowCamera(target, scene = game?.scene) {
+          const bounds = worldBoundsForScene(scene);
+          return {
+            x: target?.x ?? bounds.width / 2,
+            y: target?.y ?? bounds.height / 2,
+            mode: CAMERA_RULES.followMode,
+          };
+        }
+        function syncCameraToPlayer() {
+          if (!game?.player) return;
+          if (!game.camera)
+            game.camera = createFollowCamera(game.player, game.scene);
+          game.camera.x = game.player.x;
+          game.camera.y = game.player.y;
+          game.camera.mode = CAMERA_RULES.followMode;
+        }
         function isoProject(wx, wy) {
-          const px = game?.player?.x ?? WORLD_W / 2,
-            py = game?.player?.y ?? WORLD_H / 2,
-            dx = wx - px,
-            dy = wy - py;
+          const bounds = worldBoundsForScene(),
+            cameraX = game?.camera?.x ?? game?.player?.x ?? bounds.width / 2,
+            cameraY = game?.camera?.y ?? game?.player?.y ?? bounds.height / 2,
+            dx = wx - cameraX,
+            dy = wy - cameraY;
           return {
             x: W * 0.5 + (dx - dy) * ISO_X,
             y: ISO_BASE_Y + (dx + dy) * ISO_Y,
@@ -2134,17 +2517,18 @@
         // ---------------------------------------------------------------------
         // GAME STATE AND SCENE LIFECYCLE
         // ---------------------------------------------------------------------
-        function baseCombatant() {
+        function baseCombatant(scene = "hub") {
+          const bounds = worldBoundsForScene(scene);
           return {
-            x: WORLD_W / 2,
-            y: WORLD_H / 2 + 180,
+            x: bounds.width / 2,
+            y: bounds.height / 2 + 180,
             r: 14,
             speed: 290,
             hp: 100,
             maxHp: 100,
             regen: 0,
             damage: 12,
-            fireCooldown: 0.55,
+            fireCooldown: 0.5115,
             fireTimer: 0.2,
             bulletSpeed: 790,
             bulletRadius: 3.2,
@@ -2165,11 +2549,11 @@
           };
         }
         function baseHubPlayer() {
-          return { ...baseCombatant(), role: "hubPlayer" };
+          return { ...baseCombatant("hub"), role: "hubPlayer" };
         }
         function baseAndroid() {
           return {
-            ...baseCombatant(),
+            ...baseCombatant("arena"),
             role: "android",
             raidInventory: { researchSpec: 0, modules: {} },
             installedModules: {},
@@ -2193,6 +2577,8 @@
             moduleCarriersSpawned: 0,
             nextModuleCarrierElapsed: MODULE_CARRIER_RULES.firstSpawnTime,
             testModulesCollected: 0,
+            moduleDecision: null,
+            pendingHubModuleSummary: null,
             flash: 0,
             shake: 0,
             specGlow: 0,
@@ -2205,6 +2591,7 @@
             hubPlayer,
             android: null,
             player: hubPlayer,
+            camera: createFollowCamera(hubPlayer, "hub"),
             sector: 0,
             sectorPhase: "idle",
             sectorDecisionOpen: false,
@@ -2236,6 +2623,11 @@
           el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
+          if (el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
+          if (el.moduleDecisionOverlay)
+            el.moduleDecisionOverlay.style.display = "none";
+          game.moduleDecision = null;
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
           if (el.androidConfigOverlay)
@@ -2252,8 +2644,12 @@
           refreshMainMenu();
         }
         function resetArena() {
-          const android = baseAndroid();
-          Object.assign(android, { x: WORLD_W / 2, y: WORLD_H / 2 });
+          const bounds = worldBoundsForScene("arena"),
+            android = baseAndroid();
+          Object.assign(android, {
+            x: bounds.width / 2,
+            y: bounds.height / 2,
+          });
           Object.assign(game, {
             running: true,
             paused: false,
@@ -2269,6 +2665,7 @@
             moduleCarriersSpawned: 0,
             nextModuleCarrierElapsed: MODULE_CARRIER_RULES.firstSpawnTime,
             testModulesCollected: 0,
+            moduleDecision: null,
             flash: 0,
             shake: 0,
             specGlow: 0,
@@ -2276,6 +2673,7 @@
             upgradeLevels: {},
             android,
             player: android,
+            camera: createFollowCamera(android, "arena"),
             sector: 1,
             sectorPhase: "active",
             sectorDecisionOpen: false,
@@ -2301,6 +2699,11 @@
           el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
+          if (el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
+          if (el.moduleDecisionOverlay)
+            el.moduleDecisionOverlay.style.display = "none";
+          game.moduleDecision = null;
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
           resetAnimatedOverlay(el.sectorOverlay);
@@ -2313,6 +2716,7 @@
         function enterHub() {
           ensureAudio();
           resetJoystick();
+          provisionBlankReplacementAndroid();
           if (!game.hubPlayer) game.hubPlayer = baseHubPlayer();
           game.player = game.hubPlayer;
           game.android = null;
@@ -2325,13 +2729,15 @@
           game.sectorDecisionOpen = false;
           game.sectorCompletion = null;
           game.hubConfigOpen = false;
+          const bounds = worldBoundsForScene("hub");
           Object.assign(game.hubPlayer, {
-            x: WORLD_W / 2,
-            y: WORLD_H / 2 + 170,
+            x: bounds.width / 2,
+            y: bounds.height / 2 + 170,
             facing: "up",
             moving: false,
             moveStrength: 0,
           });
+          game.camera = createFollowCamera(game.hubPlayer, "hub");
           for (const o of HUB_OBJECTS) {
             o.renderAlpha = 1;
             o.labelVisibility = 0;
@@ -2368,6 +2774,11 @@
           if (el.pauseOverlay) el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
+          if (el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
+          if (el.moduleDecisionOverlay)
+            el.moduleDecisionOverlay.style.display = "none";
+          game.moduleDecision = null;
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
           if (el.androidConfigOverlay)
@@ -2380,14 +2791,25 @@
           }
           syncSceneUi();
           updateHud();
+          if (game.pendingHubModuleSummary) {
+            game.pendingHubModuleSummary = null;
+            requestDialogue({
+              id: "ftue_modules_secured",
+              once: true,
+              speaker: "OPERATOR",
+              text: "Android recovered. Installed modules remain active, and Raid cargo is now safe in Hub storage. Spend SPEC at the terminal to expand capacity.",
+            });
+          }
         }
         function deployArena() {
           if (game.scene !== "hub") return;
           ensureAudio();
+          const deploymentLoadout = beginAndroidDeployment();
           closeAndroidConfiguration();
           resetArena();
-          applyConfiguredModulesToRaid();
+          applyConfiguredModulesToRaid(deploymentLoadout);
           game.scene = "arena";
+          syncCameraToPlayer();
           game.paused = true;
           game.raidTransition = {
             type: "deploy",
@@ -2425,17 +2847,42 @@
           )
             game.androidBay.installedCapacity =
               MODULE_RULES.baseInstalledCapacity;
+          game.androidBay.installedCapacity = Math.min(
+            CAPACITY_PURCHASE_RULES.installed.max,
+            game.androidBay.installedCapacity,
+          );
           if (
             !Number.isFinite(game.androidBay.cargoCapacity) ||
             game.androidBay.cargoCapacity < MODULE_RULES.baseCargoCapacity
           )
             game.androidBay.cargoCapacity = MODULE_RULES.baseCargoCapacity;
+          game.androidBay.cargoCapacity = Math.min(
+            CAPACITY_PURCHASE_RULES.cargo.max,
+            game.androidBay.cargoCapacity,
+          );
           if (!game.androidBay.android)
             game.androidBay.android = createBlankAndroidLoadout();
           if (!game.androidBay.android.installedModules)
             game.androidBay.android.installedModules = {};
           if (!game.hubInventory.modules) game.hubInventory.modules = {};
           return game.androidBay;
+        }
+        function provisionBlankReplacementAndroid() {
+          if (!game.androidBay) game.androidBay = createDefaultAndroidBay();
+          if (game.androidBay.android !== null) return false;
+          game.androidBay.android = createBlankAndroidLoadout();
+          writeSave();
+          return true;
+        }
+        function beginAndroidDeployment() {
+          const bay = ensureAndroidConfiguration(),
+            installed = sanitizeModuleMap(bay.android.installedModules, {
+              perTypeLimit: MODULE_RULES.maxLevelPerType,
+              totalLimit: bay.installedCapacity,
+            });
+          bay.android = null;
+          writeSave();
+          return installed;
         }
         function installedModuleLevels() {
           return totalModuleCount(
@@ -2445,6 +2892,61 @@
         function setAndroidConfigStatus(message = "") {
           if (el.androidConfigStatus)
             el.androidConfigStatus.textContent = message;
+        }
+        function capacityPurchaseCost(type) {
+          const rule = CAPACITY_PURCHASE_RULES[type],
+            bay = ensureAndroidConfiguration();
+          if (!rule) return Infinity;
+          const purchased = Math.max(0, bay[rule.field] - rule.base);
+          return rule.baseCost + purchased * rule.costStep;
+        }
+        function capacityPurchaseAvailability(type) {
+          const rule = CAPACITY_PURCHASE_RULES[type],
+            bay = ensureAndroidConfiguration();
+          if (!rule)
+            return { allowed: false, reason: "INVALID CAPACITY", cost: 0 };
+          if (bay[rule.field] >= rule.max)
+            return { allowed: false, reason: "MAXIMUM REACHED", cost: 0 };
+          const cost = capacityPurchaseCost(type),
+            spec = Math.max(0, game.hubInventory.researchSpec || 0);
+          if (spec < cost)
+            return {
+              allowed: false,
+              reason: `${cost} SPEC • NEED ${cost - spec} MORE`,
+              cost,
+            };
+          return { allowed: true, reason: `UPGRADE +1 • ${cost} SPEC`, cost };
+        }
+        function purchaseCapacity(type) {
+          if (game?.scene !== "hub") return false;
+          const rule = CAPACITY_PURCHASE_RULES[type],
+            availability = capacityPurchaseAvailability(type),
+            bay = ensureAndroidConfiguration();
+          if (!rule || !availability.allowed) {
+            setAndroidConfigStatus(availability.reason);
+            renderAndroidConfiguration(false);
+            return false;
+          }
+          game.hubInventory.researchSpec -= availability.cost;
+          bay[rule.field]++;
+          setAndroidConfigStatus(`${rule.label} INCREASED TO ${bay[rule.field]}`);
+          playCapacityUpgradeSfx();
+          writeSave();
+          renderAndroidConfiguration(false);
+          updateHud();
+          return true;
+        }
+        function grantHubTestSpec(amount = 10) {
+          if (game?.scene !== "hub") return false;
+          game.hubInventory.researchSpec += Math.max(
+            0,
+            Math.floor(Number(amount) || 0),
+          );
+          setAndroidConfigStatus(`+${amount} TEST SPEC ADDED`);
+          writeSave();
+          renderAndroidConfiguration(false);
+          updateHud();
+          return true;
         }
         function canInstallHubModule(id) {
           if (!isModuleUpgradeId(id)) return false;
@@ -2529,6 +3031,16 @@
             el.installedCapacityText.textContent = `${used} / ${bay.installedCapacity}`;
           if (el.cargoCapacityText)
             el.cargoCapacityText.textContent = `${bay.cargoCapacity} SLOTS`;
+          const installedPurchase = capacityPurchaseAvailability("installed"),
+            cargoPurchase = capacityPurchaseAvailability("cargo");
+          if (el.buyInstalledCapacityBtn) {
+            el.buyInstalledCapacityBtn.disabled = !installedPurchase.allowed;
+            el.buyInstalledCapacityBtn.textContent = installedPurchase.reason;
+          }
+          if (el.buyCargoCapacityBtn) {
+            el.buyCargoCapacityBtn.disabled = !cargoPurchase.allowed;
+            el.buyCargoCapacityBtn.textContent = cargoPurchase.reason;
+          }
           const equipped = UPGRADE_POOL.filter((u) => (installed[u.id] || 0) > 0);
           el.installedModuleList.innerHTML = equipped.length
             ? equipped
@@ -2585,17 +3097,213 @@
           setAndroidConfigStatus();
           resetJoystick();
         }
-        function applyConfiguredModulesToRaid() {
-          const bay = ensureAndroidConfiguration(),
-            installed = sanitizeModuleMap(bay.android.installedModules, {
-              perTypeLimit: MODULE_RULES.maxLevelPerType,
-              totalLimit: bay.installedCapacity,
-            });
+        function applyConfiguredModulesToRaid(deploymentLoadout = {}) {
+          const installed = sanitizeModuleMap(deploymentLoadout, {
+            perTypeLimit: MODULE_RULES.maxLevelPerType,
+            totalLimit: raidInstalledCapacity(),
+          });
           game.android.installedModules = { ...installed };
           game.upgradeLevels = { ...installed };
           for (const upgrade of UPGRADE_POOL)
             for (let level = 0; level < (installed[upgrade.id] || 0); level++)
               upgrade.apply(game);
+        }
+        function raidInstalledModules() {
+          if (!game?.android) return {};
+          if (!game.android.installedModules)
+            game.android.installedModules = {};
+          return game.android.installedModules;
+        }
+        function raidCargoModules() {
+          if (!game?.android?.raidInventory) return {};
+          if (!game.android.raidInventory.modules)
+            game.android.raidInventory.modules = {};
+          return game.android.raidInventory.modules;
+        }
+        function raidInstalledCapacity() {
+          return Math.max(
+            MODULE_RULES.baseInstalledCapacity,
+            Math.floor(game?.androidBay?.installedCapacity || 0),
+          );
+        }
+        function raidCargoCapacity() {
+          return Math.max(
+            MODULE_RULES.baseCargoCapacity,
+            Math.floor(game?.androidBay?.cargoCapacity || 0),
+          );
+        }
+        function raidInstalledCount() {
+          return totalModuleCount(raidInstalledModules());
+        }
+        function raidCargoCount() {
+          return totalModuleCount(raidCargoModules());
+        }
+        function commitSuccessfulExtraction() {
+          if (!game?.android) return false;
+          if (!game.androidBay) game.androidBay = createDefaultAndroidBay();
+          if (!game.hubInventory.modules) game.hubInventory.modules = {};
+          const installed = sanitizeModuleMap(raidInstalledModules(), {
+              perTypeLimit: MODULE_RULES.maxLevelPerType,
+              totalLimit: raidInstalledCapacity(),
+            }),
+            cargo = sanitizeModuleMap(raidCargoModules(), {
+              totalLimit: raidCargoCapacity(),
+            }),
+            carriedSpec = Math.max(
+              0,
+              Math.floor(game.android.raidInventory.researchSpec || 0),
+            );
+          for (const id of MODULE_UPGRADE_IDS) {
+            const amount = cargo[id] || 0;
+            if (amount > 0)
+              game.hubInventory.modules[id] =
+                (game.hubInventory.modules[id] || 0) + amount;
+          }
+          game.hubInventory.researchSpec += carriedSpec;
+          game.pendingHubModuleSummary = {
+            installed: totalModuleCount(installed),
+            cargo: totalModuleCount(cargo),
+          };
+          game.androidBay.android = { installedModules: { ...installed } };
+          game.android.installedModules = { ...installed };
+          game.android.raidInventory.researchSpec = 0;
+          game.android.raidInventory.modules = {};
+          game.android.hp = game.android.maxHp;
+          writeSave();
+          return true;
+        }
+        function commitAndroidDestruction() {
+          if (!game.androidBay) game.androidBay = createDefaultAndroidBay();
+          game.androidBay.android = createBlankAndroidLoadout();
+          if (game.android) {
+            game.android.installedModules = {};
+            if (game.android.raidInventory) {
+              game.android.raidInventory.researchSpec = 0;
+              game.android.raidInventory.modules = {};
+            }
+          }
+          writeSave();
+        }
+        function moduleUseAvailability(id) {
+          const upgrade = UPGRADE_POOL.find((u) => u.id === id),
+            installed = raidInstalledModules(),
+            level = installed[id] || 0;
+          if (!upgrade) return { allowed: false, reason: "INVALID MODULE" };
+          if (level >= MODULE_RULES.maxLevelPerType)
+            return { allowed: false, reason: "MAXIMUM LEVEL REACHED" };
+          if (raidInstalledCount() >= raidInstalledCapacity())
+            return { allowed: false, reason: "INSTALLED CAPACITY FULL" };
+          return { allowed: true, reason: "INSTALL ON CURRENT ANDROID" };
+        }
+        function moduleStoreAvailability(id) {
+          if (!isModuleUpgradeId(id))
+            return { allowed: false, reason: "INVALID MODULE" };
+          if (raidCargoCount() >= raidCargoCapacity())
+            return { allowed: false, reason: "RAID CARGO FULL" };
+          return { allowed: true, reason: "RESERVE FOR EXTRACTION" };
+        }
+        function useRaidModule(id) {
+          const availability = moduleUseAvailability(id),
+            upgrade = UPGRADE_POOL.find((u) => u.id === id);
+          if (!availability.allowed || !upgrade) return availability;
+          const installed = raidInstalledModules();
+          installed[id] = (installed[id] || 0) + 1;
+          game.upgradeLevels[id] = getUpgradeLevel(id) + 1;
+          upgrade.apply(game);
+          renderRaidUpgrades();
+          renderRaidCargo();
+          updateHud();
+          return { allowed: true, reason: `${upgrade.name.toUpperCase()} USED` };
+        }
+        function storeRaidModule(id) {
+          const availability = moduleStoreAvailability(id),
+            upgrade = UPGRADE_POOL.find((u) => u.id === id);
+          if (!availability.allowed || !upgrade) return availability;
+          const cargo = raidCargoModules();
+          cargo[id] = (cargo[id] || 0) + 1;
+          renderRaidCargo();
+          updateHud();
+          return {
+            allowed: true,
+            reason: `${upgrade.name.toUpperCase()} STORED`,
+          };
+        }
+        function renderRaidCargo() {
+          if (!el.raidCargoList) return;
+          const cargo = raidCargoModules(),
+            count = raidCargoCount(),
+            capacity = raidCargoCapacity(),
+            stored = UPGRADE_POOL.filter((u) => (cargo[u.id] || 0) > 0);
+          if (el.raidCargoButtonCount)
+            el.raidCargoButtonCount.textContent = `${count}/${capacity}`;
+          el.raidCargoList.innerHTML = stored.length
+            ? stored
+                .map(
+                  (u) =>
+                    `<div class="upgradeRow"><div><strong>${u.name}</strong><span class="upgradeDetail">UNEXTRACTED MODULE PACKAGE</span></div><span class="upgradeLevel">×${cargo[u.id]}</span></div>`,
+                )
+                .join("")
+            : '<div class="upgradeEmpty">RAID CARGO IS EMPTY</div>';
+        }
+        function renderModuleDecision() {
+          const moduleId = game?.moduleDecision?.moduleId,
+            upgrade = UPGRADE_POOL.find((u) => u.id === moduleId);
+          if (!upgrade) return;
+          const use = moduleUseAvailability(moduleId),
+            store = moduleStoreAvailability(moduleId),
+            installedLevel = raidInstalledModules()[moduleId] || 0;
+          el.recoveredModuleName.textContent = upgrade.name.toUpperCase();
+          el.recoveredModuleDescription.textContent = upgrade.desc;
+          el.decisionModuleLevel.textContent = `LV ${installedLevel} / ${MODULE_RULES.maxLevelPerType}`;
+          el.decisionInstalledCapacity.textContent = `${raidInstalledCount()} / ${raidInstalledCapacity()}`;
+          el.decisionCargoCapacity.textContent = `${raidCargoCount()} / ${raidCargoCapacity()}`;
+          el.useModuleBtn.disabled = !use.allowed;
+          el.useModuleBtn.innerHTML = `USE UPGRADE [1]<span class="moduleActionReason">${use.reason}</span>`;
+          el.storeModuleBtn.disabled = !store.allowed;
+          el.storeModuleBtn.innerHTML = `STORE UPGRADE [2]<span class="moduleActionReason">${store.reason}</span>`;
+        }
+        function openModuleDecision(modulePackage) {
+          if (
+            game?.scene !== "arena" ||
+            game.choosing ||
+            !isModuleUpgradeId(modulePackage?.moduleId)
+          )
+            return false;
+          game.moduleDecision = { moduleId: modulePackage.moduleId };
+          game.choosing = true;
+          resetJoystick();
+          game.player.moving = false;
+          game.player.moveStrength = 0;
+          renderModuleDecision();
+          el.moduleDecisionOverlay.style.display = "flex";
+          return true;
+        }
+        function resolveModuleDecision(action) {
+          const moduleId = game?.moduleDecision?.moduleId;
+          if (!moduleId || !game.choosing) return false;
+          if (action === "use") {
+            const result = useRaidModule(moduleId);
+            if (!result.allowed) {
+              renderModuleDecision();
+              return false;
+            }
+            playModuleUseSfx();
+          } else if (action === "store") {
+            const result = storeRaidModule(moduleId);
+            if (!result.allowed) {
+              renderModuleDecision();
+              return false;
+            }
+            playModuleStoreSfx();
+          } else if (action === "discard") playModuleDiscardSfx();
+          else return false;
+          game.moduleDecision = null;
+          game.choosing = false;
+          el.moduleDecisionOverlay.style.display = "none";
+          renderRaidUpgrades();
+          renderRaidCargo();
+          updateHud();
+          return true;
         }
         function renderRaidUpgrades() {
           if (!el.raidUpgradeList) return;
@@ -2604,7 +3312,7 @@
             el.raidUpgradeCount.textContent = owned.length;
           if (!owned.length) {
             el.raidUpgradeList.innerHTML =
-              '<div class="upgradeEmpty">NO UPGRADES ACQUIRED</div>';
+              '<div class="upgradeEmpty">NO MODULES INSTALLED</div>';
             return;
           }
           el.raidUpgradeList.innerHTML = owned
@@ -2622,23 +3330,30 @@
         function renderTestUpgrades() {
           if (!el.testUpgradeList) return;
           el.testUpgradeList.innerHTML = UPGRADE_POOL.map((u) => {
-            const level = getUpgradeLevel(u.id);
-            return `<div class="upgradeRow testUpgradeRow"><div><strong>${u.name}</strong><span class="upgradeDetail">CURRENT LV ${level}</span></div><button data-test-upgrade="${u.id}">+1 LEVEL</button></div>`;
+            const installedLevel = raidInstalledModules()[u.id] || 0,
+              use = moduleUseAvailability(u.id),
+              store = moduleStoreAvailability(u.id);
+            return `<div class="upgradeRow testUpgradeRow"><div><strong>${u.name}</strong><span class="upgradeDetail">INSTALLED LV ${installedLevel} / 3 · CARGO ×${raidCargoModules()[u.id] || 0}</span></div><div class="testModuleActions"><button data-test-use-module="${u.id}"${use.allowed ? "" : " disabled"}>USE +1</button><button class="secondaryBtn" data-test-store-module="${u.id}"${store.allowed ? "" : " disabled"}>STORE +1</button></div></div>`;
           }).join("");
           for (const button of el.testUpgradeList.querySelectorAll(
-            "[data-test-upgrade]",
-          )) {
-            button.onclick = () => grantTestUpgrade(button.dataset.testUpgrade);
-          }
+            "[data-test-use-module]",
+          ))
+            button.onclick = () => {
+              useRaidModule(button.dataset.testUseModule);
+              renderTestUpgrades();
+            };
+          for (const button of el.testUpgradeList.querySelectorAll(
+            "[data-test-store-module]",
+          ))
+            button.onclick = () => {
+              storeRaidModule(button.dataset.testStoreModule);
+              renderTestUpgrades();
+            };
         }
-        function grantTestUpgrade(id) {
-          if (game?.scene !== "arena" || !game.android || !game.paused) return;
-          const upgrade = UPGRADE_POOL.find((u) => u.id === id);
-          if (!upgrade) return;
-          game.upgradeLevels[id] = getUpgradeLevel(id) + 1;
-          upgrade.apply(game);
+        function refreshRaidModulePanels() {
           renderTestUpgrades();
           renderRaidUpgrades();
+          renderRaidCargo();
           updateHud();
         }
         function setPaused(value) {
@@ -2657,11 +3372,16 @@
           game.player.moveStrength = 0;
           if (!game.paused && el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
+          if (!game.paused && el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
           if (!game.paused && el.testUpgradesOverlay)
             el.testUpgradesOverlay.style.display = "none";
           el.pauseOverlay.style.display = game.paused ? "flex" : "none";
           el.pauseBtn.textContent = game.paused ? "▶" : "Ⅱ";
-          if (game.paused) renderRaidUpgrades();
+          if (game.paused) {
+            renderRaidUpgrades();
+            renderRaidCargo();
+          }
         }
         function togglePause() {
           setPaused(!game.paused);
@@ -2669,45 +3389,113 @@
         // ---------------------------------------------------------------------
         // ENEMIES, PROJECTILES, DAMAGE, AND PICKUPS
         // ---------------------------------------------------------------------
+        function createCameraRelativeEntry(rule) {
+          const bounds = worldBoundsForScene("arena"),
+            center = game.player,
+            attempts = rule.attempts || 24,
+            margin = rule.worldMargin || 45;
+          let best = null,
+            bestScore = -Infinity;
+          for (let i = 0; i < attempts; i++) {
+            const angle = Math.random() * Math.PI * 2,
+              distance = rand(rule.minDistance, rule.maxDistance),
+              x = clamp(
+                center.x + Math.cos(angle) * distance,
+                -margin,
+                bounds.width + margin,
+              ),
+              y = clamp(
+                center.y + Math.sin(angle) * distance,
+                -margin,
+                bounds.height + margin,
+              ),
+              actualDistance = Math.hypot(x - center.x, y - center.y);
+            if (actualDistance < rule.minDistance * 0.72) continue;
+            const projected = isoProject(x, y),
+              outsideView =
+                projected.x < -18 ||
+                projected.x > W + 18 ||
+                projected.y < HUD_SAFE - 18 ||
+                projected.y > H + 18,
+              overflow = Math.max(
+                0,
+                -projected.x,
+                projected.x - W,
+                HUD_SAFE - projected.y,
+                projected.y - H,
+              ),
+              score =
+                (outsideView ? 100000 : 0) + actualDistance + overflow * 8;
+            if (score > bestScore) {
+              bestScore = score;
+              best = { x, y };
+            }
+          }
+          if (!best) {
+            best = {
+              x: clamp(
+                center.x + rule.minDistance,
+                -margin,
+                bounds.width + margin,
+              ),
+              y: clamp(
+                center.y - rule.minDistance,
+                -margin,
+                bounds.height + margin,
+              ),
+            };
+          }
+          const towardX = center.x - best.x,
+            towardY = center.y - best.y,
+            towardLength = Math.hypot(towardX, towardY) || 1;
+          return {
+            x: best.x,
+            y: best.y,
+            warnX: clamp(best.x, 0, bounds.width),
+            warnY: clamp(best.y, 0, bounds.height),
+            inwardX: towardX / towardLength,
+            inwardY: towardY / towardLength,
+          };
+        }
+        function assignCarrierRoamTarget(enemy) {
+          const bounds = worldBoundsForScene("arena"),
+            moduleCarrier = enemy.type === "moduleCarrier",
+            inset = moduleCarrier ? 85 : 70,
+            roamRadius = moduleCarrier ? MODULE_CARRIER_RULES.roamRadius : 400,
+            leash = moduleCarrier ? MODULE_CARRIER_RULES.anchorLeash : 440,
+            catchup = moduleCarrier
+              ? MODULE_CARRIER_RULES.anchorCatchup
+              : 0.35,
+            p = game.player;
+          let anchorX = enemy.engagementAnchorX ?? p.x,
+            anchorY = enemy.engagementAnchorY ?? p.y;
+          const toPlayerX = p.x - anchorX,
+            toPlayerY = p.y - anchorY,
+            anchorDistance = Math.hypot(toPlayerX, toPlayerY);
+          if (anchorDistance > leash) {
+            const shift = (anchorDistance - leash) * catchup;
+            anchorX += (toPlayerX / anchorDistance) * shift;
+            anchorY += (toPlayerY / anchorDistance) * shift;
+          }
+          enemy.engagementAnchorX = clamp(anchorX, inset, bounds.width - inset);
+          enemy.engagementAnchorY = clamp(anchorY, inset, bounds.height - inset);
+          const angle = Math.random() * Math.PI * 2,
+            radius = Math.sqrt(Math.random()) * roamRadius;
+          enemy.roamTargetX = clamp(
+            enemy.engagementAnchorX + Math.cos(angle) * radius,
+            inset,
+            bounds.width - inset,
+          );
+          enemy.roamTargetY = clamp(
+            enemy.engagementAnchorY + Math.sin(angle) * radius,
+            inset,
+            bounds.height - inset,
+          );
+        }
         function spawnEnemy() {
-          const margin = 45,
-            TELEGRAPH_TIME = 0.78;
-          let x, y;
-          const side = Math.floor(Math.random() * 4);
-          if (side === 0) {
-            x = rand(-margin, WORLD_W + margin);
-            y = -margin;
-          } else if (side === 1) {
-            x = WORLD_W + margin;
-            y = rand(-margin, WORLD_H + margin);
-          } else if (side === 2) {
-            x = rand(-margin, WORLD_W + margin);
-            y = WORLD_H + margin;
-          } else {
-            x = -margin;
-            y = rand(-margin, WORLD_H + margin);
-          }
-          let warnX,
-            warnY,
-            inwardX = 0,
-            inwardY = 0;
-          if (side === 0) {
-            warnX = clamp(x, 0, WORLD_W);
-            warnY = 0;
-            inwardY = 1;
-          } else if (side === 1) {
-            warnX = WORLD_W;
-            warnY = clamp(y, 0, WORLD_H);
-            inwardX = -1;
-          } else if (side === 2) {
-            warnX = clamp(x, 0, WORLD_W);
-            warnY = WORLD_H;
-            inwardY = -1;
-          } else {
-            warnX = 0;
-            warnY = clamp(y, 0, WORLD_H);
-            inwardX = 1;
-          }
+          const TELEGRAPH_TIME = 0.78,
+            entry = createCameraRelativeEntry(ENCOUNTER_ENTRY_RULES.normal),
+            { x, y, warnX, warnY, inwardX, inwardY } = entry;
           game.spawnWarnings.push({
             x: warnX,
             y: warnY,
@@ -2755,44 +3543,11 @@
           game.pendingSpawns.push({ enemy, delay: TELEGRAPH_TIME });
         }
         function spawnResearchEnemy() {
-          const margin = 45,
-            TELEGRAPH_TIME = 0.78;
-          let x, y;
-          const side = Math.floor(Math.random() * 4);
-          if (side === 0) {
-            x = rand(-margin, WORLD_W + margin);
-            y = -margin;
-          } else if (side === 1) {
-            x = WORLD_W + margin;
-            y = rand(-margin, WORLD_H + margin);
-          } else if (side === 2) {
-            x = rand(-margin, WORLD_W + margin);
-            y = WORLD_H + margin;
-          } else {
-            x = -margin;
-            y = rand(-margin, WORLD_H + margin);
-          }
-          let warnX,
-            warnY,
-            inwardX = 0,
-            inwardY = 0;
-          if (side === 0) {
-            warnX = clamp(x, 0, WORLD_W);
-            warnY = 0;
-            inwardY = 1;
-          } else if (side === 1) {
-            warnX = WORLD_W;
-            warnY = clamp(y, 0, WORLD_H);
-            inwardX = -1;
-          } else if (side === 2) {
-            warnX = clamp(x, 0, WORLD_W);
-            warnY = WORLD_H;
-            inwardY = -1;
-          } else {
-            warnX = 0;
-            warnY = clamp(y, 0, WORLD_H);
-            inwardX = 1;
-          }
+          const TELEGRAPH_TIME = 0.78,
+            entry = createCameraRelativeEntry(
+              ENCOUNTER_ENTRY_RULES.researchCarrier,
+            ),
+            { x, y, warnX, warnY, inwardX, inwardY } = entry;
           game.spawnWarnings.push({
             x: warnX,
             y: warnY,
@@ -2804,66 +3559,35 @@
           });
           const t = game.time,
             hp = 26 + t * 0.22;
+          const enemy = {
+            type: "researchCarrier",
+            x,
+            y,
+            r: 12,
+            speed: rand(65, 88) + t * 0.12,
+            hp,
+            maxHp: hp,
+            damage: 12,
+            color: "#ffd166",
+            xp: 1,
+            xpType: "rookie",
+            researchSpec: 1,
+            engagementAnchorX: game.player.x,
+            engagementAnchorY: game.player.y,
+            roamRetarget: rand(1.4, 2.8),
+          };
+          assignCarrierRoamTarget(enemy);
           game.pendingSpawns.push({
-            enemy: {
-              type: "researchCarrier",
-              x,
-              y,
-              r: 12,
-              speed: rand(65, 88) + t * 0.12,
-              hp,
-              maxHp: hp,
-              damage: 12,
-              color: "#ffd166",
-              xp: 1,
-              xpType: "rookie",
-              researchSpec: 1,
-              roamTargetX: rand(70, WORLD_W - 70),
-              roamTargetY: rand(70, WORLD_H - 70),
-              roamRetarget: rand(1.4, 2.8),
-            },
+            enemy,
             delay: TELEGRAPH_TIME,
           });
         }
         function spawnModuleCarrier() {
-          const margin = 58,
-            TELEGRAPH_TIME = 0.92;
-          let x, y;
-          const side = Math.floor(Math.random() * 4);
-          if (side === 0) {
-            x = rand(-margin, WORLD_W + margin);
-            y = -margin;
-          } else if (side === 1) {
-            x = WORLD_W + margin;
-            y = rand(-margin, WORLD_H + margin);
-          } else if (side === 2) {
-            x = rand(-margin, WORLD_W + margin);
-            y = WORLD_H + margin;
-          } else {
-            x = -margin;
-            y = rand(-margin, WORLD_H + margin);
-          }
-          let warnX,
-            warnY,
-            inwardX = 0,
-            inwardY = 0;
-          if (side === 0) {
-            warnX = clamp(x, 0, WORLD_W);
-            warnY = 0;
-            inwardY = 1;
-          } else if (side === 1) {
-            warnX = WORLD_W;
-            warnY = clamp(y, 0, WORLD_H);
-            inwardX = -1;
-          } else if (side === 2) {
-            warnX = clamp(x, 0, WORLD_W);
-            warnY = WORLD_H;
-            inwardY = -1;
-          } else {
-            warnX = 0;
-            warnY = clamp(y, 0, WORLD_H);
-            inwardX = 1;
-          }
+          const TELEGRAPH_TIME = MODULE_CARRIER_RULES.telegraphTime,
+            entry = createCameraRelativeEntry(
+              ENCOUNTER_ENTRY_RULES.moduleCarrier,
+            ),
+            { x, y, warnX, warnY, inwardX, inwardY } = entry;
           game.spawnWarnings.push({
             x: warnX,
             y: warnY,
@@ -2871,28 +3595,32 @@
             inwardY,
             life: TELEGRAPH_TIME,
             maxLife: TELEGRAPH_TIME,
-            color: "#97ff4d",
+            color: "#ff9f43",
             size: 18,
           });
           const elapsed = Math.max(0, game.time - (game.sectorStartTime || 0)),
-            hp = 34 + elapsed * 0.16;
+            hp =
+              MODULE_CARRIER_RULES.baseHp +
+              elapsed * MODULE_CARRIER_RULES.hpPerSecond;
+          const enemy = {
+            type: "moduleCarrier",
+            x,
+            y,
+            r: MODULE_CARRIER_RULES.radius,
+            speed: rand(48, 65) + elapsed * 0.07,
+            hp,
+            maxHp: hp,
+            damage: 12,
+            color: "#ff9f43",
+            xp: 0,
+            modulePackage: true,
+            engagementAnchorX: game.player.x,
+            engagementAnchorY: game.player.y,
+            roamRetarget: rand(1.7, 3.2),
+          };
+          assignCarrierRoamTarget(enemy);
           game.pendingSpawns.push({
-            enemy: {
-              type: "moduleCarrier",
-              x,
-              y,
-              r: MODULE_CARRIER_RULES.radius,
-              speed: rand(48, 65) + elapsed * 0.07,
-              hp,
-              maxHp: hp,
-              damage: 12,
-              color: "#97ff4d",
-              xp: 0,
-              modulePackage: true,
-              roamTargetX: rand(85, WORLD_W - 85),
-              roamTargetY: rand(85, WORLD_H - 85),
-              roamRetarget: rand(1.7, 3.2),
-            },
+            enemy,
             delay: TELEGRAPH_TIME,
           });
           game.moduleCarriersSpawned++;
@@ -2911,8 +3639,25 @@
           }
           return best;
         }
+        function nearestModuleCarrier(maxDistance = Infinity) {
+          let best = null,
+            bd = maxDistance * maxDistance;
+          for (const e of game.enemies) {
+            if (e.dead || e.type !== "moduleCarrier") continue;
+            const d = dist2(game.player, e);
+            if (d <= bd) {
+              bd = d;
+              best = e;
+            }
+          }
+          return best;
+        }
         function attackDetectionRange(p = game.player) {
           return p.bulletSpeed * p.bulletLife * 0.95;
+        }
+        function preferredAttackTarget(p = game.player) {
+          const range = attackDetectionRange(p);
+          return nearestModuleCarrier(range) || nearestEnemy(range);
         }
         function nearestRicochetTarget(b) {
           let best = null,
@@ -2942,7 +3687,7 @@
         }
         function fire() {
           const p = game.player,
-            target = nearestEnemy(attackDetectionRange(p));
+            target = preferredAttackTarget(p);
           if (!target) return false;
           const base = Math.atan2(target.y - p.y, target.x - p.x),
             n = p.shotCount,
@@ -3032,19 +3777,20 @@
             r: 112,
             life: 0.52,
             maxLife: 0.52,
-            color: "#97ff4d",
-            fill: "rgba(151,255,77,.14)",
+            color: "#ff9f43",
+            fill: "rgba(255,159,67,.14)",
           });
-          burst(source.x, source.y, "#97ff4d", 30);
-          burst(source.x, source.y, "#e5ffc4", 14);
+          burst(source.x, source.y, "#ff9f43", 30);
+          burst(source.x, source.y, "#ffe1b0", 14);
           game.shake = Math.max(game.shake, 7);
           playCarrierBurstSfx();
         }
         function safeLootPosition(x, y, r = 6) {
-          const inset = Math.max(18, r + 8);
+          const bounds = worldBoundsForScene("arena"),
+            inset = Math.max(18, r + 8);
           return {
-            x: clamp(x, inset, WORLD_W - inset),
-            y: clamp(y, inset, WORLD_H - inset),
+            x: clamp(x, inset, bounds.width - inset),
+            y: clamp(y, inset, bounds.height - inset),
           };
         }
         function specAcquiredFeedback(amount = 1) {
@@ -3063,13 +3809,13 @@
         function modulePackageFeedback() {
           const p = game.player;
           game.moduleAcquireEffects.push({
-            life: 0.92,
-            maxLife: 0.92,
+            life: 0.62,
+            maxLife: 0.62,
             text: "MODULE PACKAGE RECOVERED",
           });
           burst(p.x, p.y, "#97ff4d", 18);
           burst(p.x, p.y, "#e5ffc4", 8);
-          playXpSfx();
+          playModuleRevealSfx();
         }
         function clearGroundModulePackages(withEffects = false) {
           if (withEffects)
@@ -3089,6 +3835,7 @@
           game.modulePackages = [];
         }
         function updateModulePackagePickups(dt) {
+          if (game.choosing || game.moduleDecision) return;
           const p = game.player;
           for (const modulePackage of game.modulePackages) {
             modulePackage.bob += dt * 3.6;
@@ -3101,9 +3848,12 @@
               d = Math.hypot(modulePackage.x - p.x, modulePackage.y - p.y);
             }
             if (d < p.r + modulePackage.r + 5) {
-              modulePackage.dead = true;
-              game.testModulesCollected++;
-              modulePackageFeedback();
+              if (openModuleDecision(modulePackage)) {
+                modulePackage.dead = true;
+                game.testModulesCollected++;
+                modulePackageFeedback();
+                break;
+              }
             }
           }
           game.modulePackages = game.modulePackages.filter((m) => !m.dead);
@@ -3139,7 +3889,7 @@
               specPos = safeLootPosition(e.x, e.y, 9),
               healthPos = safeLootPosition(e.x, e.y, 5),
               modulePos = safeLootPosition(e.x, e.y, 11);
-            if ((e.xp || 0) > 0)
+            if (XP_PROGRESSION_ENABLED && (e.xp || 0) > 0)
               game.gems.push({
                 pickupType: "xp",
                 extractionBehavior: "absorb",
@@ -3212,6 +3962,7 @@
           }
         }
         function gainXp(amount) {
+          if (!XP_PROGRESSION_ENABLED) return;
           game.xp += amount;
           while (game.xp >= game.xpNeed) {
             game.xp -= game.xpNeed;
@@ -3222,6 +3973,7 @@
           }
         }
         function gainXpForExtraction(amount) {
+          if (!XP_PROGRESSION_ENABLED) return;
           game.xp += amount;
           while (game.xp >= game.xpNeed) {
             game.xp -= game.xpNeed;
@@ -3268,16 +4020,22 @@
           el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
+          if (el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
+          if (el.moduleDecisionOverlay)
+            el.moduleDecisionOverlay.style.display = "none";
+          game.moduleDecision = null;
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
           resetAnimatedOverlay(el.sectorOverlay);
           game.sectorDecisionOpen = false;
           el.finalTime.textContent = fmtTime(game.time);
           el.finalKills.textContent = game.kills;
-          el.finalLevel.textContent = game.level;
+          el.finalLevel.textContent = `${raidInstalledCount()}/${raidInstalledCapacity()}`;
           if (el.lostSpec)
             el.lostSpec.textContent =
               game.android?.raidInventory?.researchSpec || 0;
+          commitAndroidDestruction();
           startRaidTransition("combatDeath");
         }
         function resetAnimatedOverlay(overlay) {
@@ -3323,20 +4081,25 @@
             raidSpec = game.android?.raidInventory?.researchSpec || 0,
             hubSpec = game.hubInventory?.researchSpec || 0;
           el.time.textContent = fmtTime(game.time);
-          el.level.textContent = game.level;
           el.kills.textContent = game.kills;
           if (el.raidSpec) el.raidSpec.textContent = raidSpec;
           if (el.moduleCarrierProgress)
             el.moduleCarrierProgress.textContent = `${game.moduleCarriersSpawned || 0}/${MODULE_CARRIER_RULES.perSector}`;
           if (el.modulePackageCount)
-            el.modulePackageCount.textContent = game.testModulesCollected || 0;
+            el.modulePackageCount.textContent = `${raidCargoCount()}/${raidCargoCapacity()}`;
+          if (el.installedCapacityHud)
+            el.installedCapacityHud.textContent = `${raidInstalledCount()}/${raidInstalledCapacity()}`;
+          if (el.raidCargoButtonCount)
+            el.raidCargoButtonCount.textContent = `${raidCargoCount()}/${raidCargoCapacity()}`;
           if (el.hubSpec) el.hubSpec.textContent = hubSpec;
           if (el.sectorSpec) el.sectorSpec.textContent = raidSpec;
           el.damage.textContent = Math.round(p.damage);
           el.hpText.textContent = `${Math.ceil(p.hp)} / ${Math.ceil(p.maxHp)}`;
-          el.xpText.textContent = `${game.xp} / ${game.xpNeed}`;
+          if (el.xpText)
+            el.xpText.textContent = `${game.xp} / ${game.xpNeed}`;
           el.hpFill.style.width = (100 * p.hp) / p.maxHp + "%";
-          el.xpFill.style.width = (100 * game.xp) / game.xpNeed + "%";
+          if (el.xpFill)
+            el.xpFill.style.width = (100 * game.xp) / game.xpNeed + "%";
         }
         const joystickState = {
           x: 0,
@@ -3444,11 +4207,20 @@
             if (l > 0) {
               dx /= l;
               dy /= l;
-              const step = p.speed * inputMagnitude * dt,
+              const bounds = worldBoundsForScene(),
+                step = p.speed * inputMagnitude * dt,
                 oldX = p.x,
                 oldY = p.y,
-                nextX = clamp(oldX + dx * step, p.r, WORLD_W - p.r),
-                nextY = clamp(oldY + dy * step, p.r, WORLD_H - p.r);
+                nextX = clamp(
+                  oldX + dx * step,
+                  p.r,
+                  bounds.width - p.r,
+                ),
+                nextY = clamp(
+                  oldY + dy * step,
+                  p.r,
+                  bounds.height - p.r,
+                );
               if (game.scene === "hub") {
                 p.x = nextX;
                 if (collidesWithHubObjects(p.x, p.y, p.r)) p.x = oldX;
@@ -3460,6 +4232,7 @@
               }
             }
           }
+          syncCameraToPlayer();
         }
         // ---------------------------------------------------------------------
         // HUB AND RAID UPDATE PIPELINE
@@ -3513,6 +4286,11 @@
           if (el.pauseOverlay) el.pauseOverlay.style.display = "none";
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
+          if (el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
+          if (el.moduleDecisionOverlay)
+            el.moduleDecisionOverlay.style.display = "none";
+          game.moduleDecision = null;
           if (el.selfDestructConfirmOverlay)
             el.selfDestructConfirmOverlay.style.display = "none";
           if (type === "extract") {
@@ -3599,11 +4377,7 @@
           const tr = game.raidTransition;
           if (!tr || tr.type !== "extract" || tr.phase !== "recovery") return;
           collectExtractionPickups(true);
-          const carried = game.android?.raidInventory?.researchSpec || 0;
-          game.hubInventory.researchSpec += carried;
-          if (game.android?.raidInventory)
-            game.android.raidInventory.researchSpec = 0;
-          writeSave();
+          commitSuccessfulExtraction();
           tr.phase = "beam";
           tr.elapsed = 0;
           tr.duration = 1.55;
@@ -3658,7 +4432,7 @@
                 id: "ftue_first_raid",
                 once: true,
                 speaker: "OPERATOR",
-                text: "Hostile signatures detected. Eliminate the threat, recover anything of value, and bring the Android home.",
+                text: "Hostile signatures detected. Module Carriers hold upgrades—use them now or store them for extraction. Bring the Android home intact.",
               });
               updateHud();
             }
@@ -3694,8 +4468,9 @@
           }
         }
         function beginSectorCleanup() {
-          if (game.sector !== 1 || game.sectorPhase !== "active") return;
-          game.time = SECTOR_ONE_END;
+          const sectorEndTime = SECTOR_END_TIMES[game.sector];
+          if (!sectorEndTime || game.sectorPhase !== "active") return;
+          game.time = sectorEndTime;
           game.sectorPhase = "cleanup";
           game.spawnWarnings = [];
           game.pendingSpawns = [];
@@ -3719,7 +4494,9 @@
           if (
             game.sectorPhase !== "cleanup" ||
             game.sectorDecisionOpen ||
-            game.sectorCompletion
+            game.sectorCompletion ||
+            game.choosing ||
+            game.moduleDecision
           )
             return;
           if (
@@ -3777,8 +4554,7 @@
         }
         function selfDestructRaid() {
           if (game.scene !== "arena" || game.raidTransition) return;
-          if (game.android?.raidInventory)
-            game.android.raidInventory.researchSpec = 0;
+          commitAndroidDestruction();
           startRaidTransition("selfDestruct");
         }
         function updateArena(dt) {
@@ -3792,10 +4568,11 @@
           }
           if (!game.running || game.paused || game.choosing) return;
           if (game.sectorPhase === "active") game.time += dt;
+          const sectorEndTime = SECTOR_END_TIMES[game.sector];
           if (
-            game.sector === 1 &&
+            sectorEndTime &&
             game.sectorPhase === "active" &&
-            game.time >= SECTOR_ONE_END
+            game.time >= sectorEndTime
           )
             beginSectorCleanup();
           game.flash = Math.max(0, game.flash - dt);
@@ -3836,9 +4613,10 @@
             game.nextSpecEnemyTime = game.time + rand(34, 46);
           }
           const sectorElapsed = Math.max(
-            0,
-            game.time - (game.sectorStartTime || 0),
-          );
+              0,
+              game.time - (game.sectorStartTime || 0),
+            ),
+            arenaBounds = worldBoundsForScene("arena");
           if (
             game.sectorPhase === "active" &&
             game.moduleCarriersSpawned < MODULE_CARRIER_RULES.perSector &&
@@ -3862,13 +4640,13 @@
               e.type === "moduleCarrier"
             ) {
               e.roamRetarget = (e.roamRetarget ?? 0) - dt;
-              const roamDx = (e.roamTargetX ?? WORLD_W / 2) - e.x,
-                roamDy = (e.roamTargetY ?? WORLD_H / 2) - e.y,
+              const roamDx =
+                  (e.roamTargetX ?? e.engagementAnchorX ?? p.x) - e.x,
+                roamDy =
+                  (e.roamTargetY ?? e.engagementAnchorY ?? p.y) - e.y,
                 roamDist = Math.hypot(roamDx, roamDy);
               if (e.roamRetarget <= 0 || roamDist < 32) {
-                const roamInset = e.type === "moduleCarrier" ? 85 : 70;
-                e.roamTargetX = rand(roamInset, WORLD_W - roamInset);
-                e.roamTargetY = rand(roamInset, WORLD_H - roamInset);
+                assignCarrierRoamTarget(e);
                 e.roamRetarget =
                   e.type === "moduleCarrier"
                     ? rand(1.7, 3.2)
@@ -3898,9 +4676,12 @@
               e.type === "researchCarrier" ||
               e.type === "moduleCarrier"
             ) {
-              const edge = e.type === "moduleCarrier" ? 58 : 45;
-              e.x = clamp(e.x, -edge, WORLD_W + edge);
-              e.y = clamp(e.y, -edge, WORLD_H + edge);
+              const edge =
+                e.type === "moduleCarrier"
+                  ? ENCOUNTER_ENTRY_RULES.moduleCarrier.worldMargin
+                  : ENCOUNTER_ENTRY_RULES.researchCarrier.worldMargin;
+              e.x = clamp(e.x, -edge, arenaBounds.width + edge);
+              e.y = clamp(e.y, -edge, arenaBounds.height + edge);
             }
             e.hitFlash = Math.max(0, (e.hitFlash || 0) - dt);
             e.healthBarTimer = Math.max(0, (e.healthBarTimer || 0) - dt);
@@ -3952,7 +4733,7 @@
                 if (p.hp <= 0) {
                   p.hp = 0;
                   gameOver();
-                  break;
+                  return;
                 }
                 break;
               }
@@ -4034,13 +4815,15 @@
             n.vy *= 0.97;
             n.life -= dt;
           }
+          const arenaBoundsForCleanup = worldBoundsForScene("arena"),
+            projectileWorldMargin = ENCOUNTER_WORLD_MARGIN + 100;
           game.bullets = game.bullets.filter(
             (b) =>
               b.life > 0 &&
-              b.x > -100 &&
-              b.x < WORLD_W + 100 &&
-              b.y > -100 &&
-              b.y < WORLD_H + 100,
+              b.x > -projectileWorldMargin &&
+              b.x < arenaBoundsForCleanup.width + projectileWorldMargin &&
+              b.y > -projectileWorldMargin &&
+              b.y < arenaBoundsForCleanup.height + projectileWorldMargin,
           );
           game.enemies = game.enemies.filter((e) => !e.dead);
           game.gems = game.gems.filter((g) => !g.dead);
@@ -4071,6 +4854,7 @@
             game.player.moveStrength = 0;
             game.player.animTime += dt;
           }
+          syncCameraToPlayer();
           updateDialogue(dt);
         }
         // ---------------------------------------------------------------------
@@ -4079,10 +4863,12 @@
         function drawGrid(tint = "#0b0e12") {
           ctx.fillStyle = tint;
           ctx.fillRect(0, 0, W, H);
-          const worldBottom = WORLD_H,
+          const bounds = worldBoundsForScene(),
+            worldBottom = bounds.height,
+            worldRight = bounds.width,
             c0 = isoProject(0, 0),
-            c1 = isoProject(WORLD_W, 0),
-            c2 = isoProject(WORLD_W, worldBottom),
+            c1 = isoProject(worldRight, 0),
+            c2 = isoProject(worldRight, worldBottom),
             c3 = isoProject(0, worldBottom);
           ctx.save();
           ctx.beginPath();
@@ -4096,7 +4882,7 @@
           ctx.fillRect(0, 0, W, H);
           ctx.lineWidth = 1;
           ctx.strokeStyle = "rgba(255,255,255,.055)";
-          for (let x = 0; x <= WORLD_W; x += GRID_STEP) {
+          for (let x = 0; x <= worldRight; x += GRID_STEP) {
             const a = isoProject(x, 0),
               b = isoProject(x, worldBottom);
             ctx.beginPath();
@@ -4106,7 +4892,7 @@
           }
           for (let y = 0; y <= worldBottom; y += GRID_STEP) {
             const a = isoProject(0, y),
-              b = isoProject(WORLD_W, y);
+              b = isoProject(worldRight, y);
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
             ctx.lineTo(b.x, b.y);
@@ -5126,7 +5912,7 @@
                 topY = bodyY - sz * 0.22;
               ctx.save();
               ctx.globalAlpha = 0.12 + pulse * 0.1;
-              ctx.fillStyle = "#97ff4d";
+              ctx.fillStyle = "#ff9f43";
               ctx.beginPath();
               ctx.ellipse(
                 s.x,
@@ -5142,9 +5928,9 @@
               ctx.save();
               ctx.translate(s.x, topY);
               ctx.shadowBlur = 22 + pulse * 12;
-              ctx.shadowColor = "#97ff4d";
-              ctx.fillStyle = flash ? "#fff" : "#172414";
-              ctx.strokeStyle = flash ? "#fff" : "#b9ff66";
+              ctx.shadowColor = "#ff9f43";
+              ctx.fillStyle = flash ? "#fff" : "#2a1b10";
+              ctx.strokeStyle = flash ? "#fff" : "#ffd166";
               ctx.lineWidth = 3;
               ctx.beginPath();
               ctx.moveTo(0, -sz);
@@ -5157,7 +5943,7 @@
               ctx.fill();
               ctx.stroke();
               ctx.shadowBlur = 0;
-              ctx.fillStyle = flash ? "#fff" : "#97ff4d";
+              ctx.fillStyle = flash ? "#fff" : "#ff9f43";
               ctx.fillRect(-sz * 0.54, -sz * 0.18, sz * 1.08, sz * 0.36);
               ctx.fillStyle = "#0b1209";
               ctx.font = `900 ${Math.max(11, sz * 0.55)}px Inter,system-ui`;
@@ -5171,7 +5957,7 @@
               ctx.font = "900 9px Inter,system-ui";
               ctx.lineWidth = 3;
               ctx.strokeStyle = "rgba(0,0,0,.88)";
-              ctx.fillStyle = "#c9ff8c";
+              ctx.fillStyle = "#ffd08a";
               ctx.strokeText("MODULE CARRIER", s.x, topY - sz - 8);
               ctx.fillText("MODULE CARRIER", s.x, topY - sz - 8);
               ctx.restore();
@@ -5361,7 +6147,11 @@
             ctx.stroke();
             ctx.globalAlpha = (1 - progress) * 0.45;
             ctx.strokeStyle =
-              cb.color === "#97ff4d" ? "#e5ffc4" : "#fff0b0";
+              cb.color === "#97ff4d"
+                ? "#e5ffc4"
+                : cb.color === "#ff9f43"
+                  ? "#ffe1b0"
+                  : "#fff0b0";
             ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.ellipse(s.x, s.y, rx * 0.72, ry * 0.72, 0, 0, Math.PI * 2);
@@ -5503,6 +6293,8 @@
             ctx.fillStyle =
               w.color === "#ffd166"
                 ? "rgba(255,209,102,.18)"
+                : w.color === "#ff9f43"
+                  ? "rgba(255,159,67,.2)"
                 : w.color === "#97ff4d"
                   ? "rgba(151,255,77,.2)"
                   : "rgba(255,95,114,.18)";
@@ -5510,7 +6302,8 @@
             ctx.arc(0, 0, warningSize, 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = w.color || "#ff6b7d";
-            ctx.lineWidth = w.color === "#97ff4d" ? 3.5 : 2.6;
+            ctx.lineWidth =
+              w.color === "#97ff4d" || w.color === "#ff9f43" ? 3.5 : 2.6;
             ctx.beginPath();
             ctx.arc(0, 0, warningSize * 0.6, 0, Math.PI * 2);
             ctx.stroke();
@@ -5570,9 +6363,14 @@
               game?.choosing &&
               ["Digit1", "Digit2", "Digit3"].includes(e.code)
             ) {
-              const i = Number(e.code.slice(-1)) - 1,
-                u = game.upgradePicks?.[i];
-              if (u) chooseUpgrade(u);
+              if (game.moduleDecision) {
+                const actions = { Digit1: "use", Digit2: "store", Digit3: "discard" };
+                resolveModuleDecision(actions[e.code]);
+              } else {
+                const i = Number(e.code.slice(-1)) - 1,
+                  u = game.upgradePicks?.[i];
+                if (u) chooseUpgrade(u);
+              }
             }
             if (
               (e.code === "Escape" || e.code === "KeyP") &&
@@ -5581,6 +6379,8 @@
             ) {
               if (el.raidUpgradesOverlay?.style.display === "flex")
                 el.raidUpgradesOverlay.style.display = "none";
+              else if (el.raidCargoOverlay?.style.display === "flex")
+                el.raidCargoOverlay.style.display = "none";
               else if (el.testUpgradesOverlay?.style.display === "flex")
                 el.testUpgradesOverlay.style.display = "none";
               else if (el.selfDestructConfirmOverlay?.style.display === "flex")
@@ -5680,6 +6480,16 @@
           if (el.raidUpgradesOverlay)
             el.raidUpgradesOverlay.style.display = "none";
         };
+        el.raidCargoBtn.onclick = () => {
+          if (game?.scene === "arena" && game.paused) {
+            renderRaidCargo();
+            el.raidCargoOverlay.style.display = "flex";
+          }
+        };
+        el.closeRaidCargoBtn.onclick = () => {
+          if (el.raidCargoOverlay)
+            el.raidCargoOverlay.style.display = "none";
+        };
         el.testUpgradesBtn.onclick = () => {
           if (game?.scene === "arena" && game.paused) {
             renderTestUpgrades();
@@ -5692,8 +6502,15 @@
         };
         el.closeAndroidConfigBtn.onclick = closeAndroidConfiguration;
         el.deployConfiguredAndroidBtn.onclick = deployArena;
+        el.buyInstalledCapacityBtn.onclick = () =>
+          purchaseCapacity("installed");
+        el.buyCargoCapacityBtn.onclick = () => purchaseCapacity("cargo");
         el.grantAllTestModulesBtn.onclick = grantAllHubTestModules;
+        el.grantTestSpecBtn.onclick = () => grantHubTestSpec(10);
         el.clearTestModulesBtn.onclick = clearHubTestModules;
+        el.useModuleBtn.onclick = () => resolveModuleDecision("use");
+        el.storeModuleBtn.onclick = () => resolveModuleDecision("store");
+        el.discardModuleBtn.onclick = () => resolveModuleDecision("discard");
         el.selfDestructBtn.onclick = () => {
           if (
             game?.scene === "arena" &&
